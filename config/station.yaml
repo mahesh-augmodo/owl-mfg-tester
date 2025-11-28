@@ -1,0 +1,19 @@
+# Configuration for the DUT station.
+
+# Device Under Test (DUT) specific settings.
+dut_port: 8888
+
+# ADB (Android Debug Bridge) related settings.
+adb:
+  # Whether to use a remote ADB host. If false, local ADB will be used.
+  use_remote_adb: true
+  # The hostname or IP address of the remote ADB host.
+  adb_host: "mahesh-deskpi"
+  # The port on the ADB host where the ADB server is running.
+  adb_host_port: 5037
+
+# General command execution settings.
+# Maximum number of retries for command execution.
+max_cmd_retry: 3
+# Timeout in seconds for remote command execution.
+remote_cmd_timeout: 30
