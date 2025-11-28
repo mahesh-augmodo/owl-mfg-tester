@@ -4,7 +4,6 @@ import requests
 import openhtf as htf
 from openhtf.util.configuration import CONF
 
-
 class DutControllerPlug(htf.BasePlug):
     """Manages connectivity with a Device Under Test (DUT).
 
