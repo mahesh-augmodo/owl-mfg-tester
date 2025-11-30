@@ -15,5 +15,8 @@ adb:
 # General command execution settings.
 # Maximum number of retries for command execution.
 max_cmd_retry: 3
+cmd_retry_interval: 0.5
+# Timeout in seconds for adb command execution
+adb_timeout: 30
 # Timeout in seconds for remote command execution.
 remote_cmd_timeout: 30
