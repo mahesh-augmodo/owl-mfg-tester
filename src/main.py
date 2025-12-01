@@ -1,6 +1,7 @@
 import sys
 import openhtf as htf
 from openhtf.util.configuration import CONF
+from openhtf.plugs import user_input
 from openhtf.output.callbacks import json_factory
 from tofupilot.openhtf import TofuPilot
 from phases.setup_phase import setup_adb, bringup_wifi
@@ -28,4 +29,4 @@ if __name__ == "__main__":
     part_number="scriptTest01"
     )
     with TofuPilot(test):
-        test.execute()
+        test.execute(test_start=user_input.prompt_for_test_start("Please scan device id for test to start:"))

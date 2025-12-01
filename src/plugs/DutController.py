@@ -437,24 +437,22 @@ class ADBDutControllerPlug(htf.BasePlug):
             self.logger.info(
                 "Local ADB provisioning in use (remote ADB host not configured).")
 
-        # Verify adb works and get DUT ID
-        list_devices_result = self.run_adb_cmd(["devices", "-l"])
+        # Try and see if adb works automatically.
+        list_devices_result = self.run_adb_cmd(["devices"],device_id=self.device_id)
 
         if not list_devices_result.is_success:
             self.logger.error(f"Provisioning failed: {list_devices_result.error_message}")
             return list_devices_result # Directly return the CommandResult, as it contains full details
 
         self.logger.debug(
-            f"ADB devices list: {list_devices_result.full_output}")
-        # This method updates self.dut_id internally
-        self.get_device_id(list_devices_result.full_output)
+            f"ADB Devices returned: {list_devices_result.full_output}")
 
-        if self.device_id:
-            info_msg = f"Provisioning successful. DUT ID identified: {self.device_id}"
+        if self.device_id in list_devices_result.stdout:
+            info_msg = f"ADB connected successfully to DUT ID : {self.device_id}"
             self.logger.info(info_msg)
             return CommandResult(is_success=True, error_message=info_msg)
 
-        error_msg = "No valid DUT ID could be extracted from the device list."
+        error_msg = f"ADB could not connect to DUT ID {self.device_id}."
         self.logger.error(f"Provisioning failed: {error_msg}")
         return CommandResult(is_success=False, error_message=error_msg, stdout=list_devices_result.stdout, stderr=list_devices_result.stderr, exit_code=list_devices_result.exit_code)
 

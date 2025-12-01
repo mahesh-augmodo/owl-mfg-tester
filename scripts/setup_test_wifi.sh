@@ -84,7 +84,7 @@ check_if_connected() {
 }
 
 # ==============================================================================
-# FUNCTION 3: get_ip_address
+# FUNCTION 4: get_ip_address
 # Finds the device IP address.
 # ==============================================================================
 get_ip_address() {

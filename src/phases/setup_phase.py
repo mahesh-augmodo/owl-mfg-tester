@@ -19,14 +19,10 @@ def setup_adb(test: htfTestApi, dut):
     """Phase that runs the provisioning logic."""
     test.logger.info("Starting Provisioning...")
     # We call the method on the instance OpenHTF created for us
+    dut.device_id = test.test_record.dut_id
     provision_result: CommandResult = dut.provision_via_adb()
     
     if not provision_result.is_success:
-        return htf.PhaseResult.STOP
-    
-    test.test_record.dut_id=dut.device_id
-    result = dut.push_scripts_to_device()
-    if not result.is_success:
         return htf.PhaseResult.STOP
 
 @htf.plug(dut=ADBDutControllerPlug)
@@ -44,8 +40,7 @@ def bringup_wifi(test: htf.TestApi, dut):
 
         # Let's find the IP Address
         ip_address_search = re.search(r'Device.IP.Address.=.([0-9.]+)*', result.full_output)
-        print(ip_address_search)
         test.measurements.ip_address = ip_address_search.group(1)
     
-    test.logger.info("Wifi is up, and test networks have been found")
+    test.logger.info("Wifi is up, and test networks have been found in network scan")
     return htf.PhaseResult.CONTINUE
