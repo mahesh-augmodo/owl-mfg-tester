@@ -1,5 +1,6 @@
 import subprocess
 import time
+import os
 from typing import Optional, Tuple, List, Union, Callable  # Added Callable
 import openhtf as htf
 from openhtf.util.configuration import CONF
@@ -16,8 +17,8 @@ class ADBDutControllerPlug(htf.BasePlug):
         """
         super().__init__()
         self.ssh_process: Optional[subprocess.Popen] = None
-        self.use_remote_adb: bool = CONF.use_remote_adb  # Correctly load from CONF
-        self.device_id: Optional[str] = None  # Placeholder for device ID
+        self.use_remote_adb: bool = CONF.use_remote_adb
+        self.device_id: Optional[str] = None 
 
     def _run_command_with_retry_and_check(
         self,
@@ -47,7 +48,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         # For logging purposes, prepare a string representation of the command
         # Handle command_args differently based on the executor
         log_command_str = ""
-        if command_executor == self.__run_adb_cmd:
+        if command_executor == self.run_adb_cmd:
             log_command_str = ' '.join(command_args)
         elif isinstance(command_args, str) and command_executor == self.__remote_run_on_adb_host:
             log_command_str = command_args 
@@ -58,7 +59,7 @@ class ADBDutControllerPlug(htf.BasePlug):
             # Dynamically call the provided command_executor
             current_command_result: CommandResult = (
                 command_executor(command_args, device_id)
-                if command_executor == self.__run_adb_cmd
+                if command_executor == self.run_adb_cmd
                 else command_executor(command_args) # For __remote_run_on_adb_host, command_args is already a string
             )
             last_command_result = current_command_result # Update last result
@@ -147,7 +148,7 @@ class ADBDutControllerPlug(htf.BasePlug):
             self.logger.error(error_msg)
             return CommandResult(is_success=False, error_message=error_msg, stdout=stdout, stderr=stderr, exit_code=exit_code)
 
-    def __run_adb_cmd(self, adb_command: List[str], device_id: Optional[str] = None) -> CommandResult:
+    def run_adb_cmd(self, adb_command: List[str], device_id: Optional[str] = None) -> CommandResult:
         """
         Executes a general ADB command locally.
         (Refactored to use _run_subprocess_command)
@@ -192,7 +193,7 @@ class ADBDutControllerPlug(htf.BasePlug):
             A CommandResult object indicating success/failure and containing output details.
         """
         return self._run_command_with_retry_and_check(
-            self.__run_adb_cmd, adb_command, expected_outputs, "ADB command", device_id
+            self.run_adb_cmd, adb_command, expected_outputs, "ADB command", device_id
         )
 
     # Changed return type
@@ -303,7 +304,7 @@ class ADBDutControllerPlug(htf.BasePlug):
             A CommandResult object indicating success/failure.
         """
         for i in range(CONF.max_cmd_retry):
-            result = self.__run_adb_cmd(["kill-server"])
+            result = self.run_adb_cmd(["kill-server"])
 
             # Define the success condition clearly
             # ADB kill-server can return non-zero but still indicate success if server was already dead
@@ -351,7 +352,7 @@ class ADBDutControllerPlug(htf.BasePlug):
 
         last_result: Optional[CommandResult] = None
         while time.time() - ssh_tunnel_start_time < CONF.remote_cmd_timeout:
-            result = self.__run_adb_cmd(["devices"])  # Get CommandResult
+            result = self.run_adb_cmd(["devices"])  # Get CommandResult
             last_result = result
 
             if result.is_success and "device" in result.full_output:
@@ -437,7 +438,7 @@ class ADBDutControllerPlug(htf.BasePlug):
                 "Local ADB provisioning in use (remote ADB host not configured).")
 
         # Verify adb works and get DUT ID
-        list_devices_result = self.__run_adb_cmd(["devices", "-l"])
+        list_devices_result = self.run_adb_cmd(["devices", "-l"])
 
         if not list_devices_result.is_success:
             self.logger.error(f"Provisioning failed: {list_devices_result.error_message}")
@@ -473,6 +474,30 @@ class ADBDutControllerPlug(htf.BasePlug):
             if len(dut_ids) == 1:
                 self.device_id = dut_ids[0]
         return self.device_id if self.device_id else ""
+    
+    def push_scripts_to_device(self)-> CommandResult:
+        if self.device_id:
+            scripts_dir = CONF.scripts_path
+            result = self.adb_push(scripts_dir,"/tmp/",device_id=self.device_id)
+            if result.is_success:
+                self.logger.info(f"Successfully pushed {scripts_dir} to device.")
+                self.logger.debug(f"STDOUT: \n{result.stdout}")
+            else:
+                self.logger.error(f"ADB Push failed with STDERR: \n{result.stderr}")
+            return result
+        else:
+            self.logger.error("Device not identified, cannot push without device_id")
+            return CommandResult(False)
+    
+    def bringup_wifi_on_device(self)-> CommandResult:        
+        if self.device_id:
+            scripts_dir = CONF.scripts_path
+            result = self.run_adb_cmd(["shell", "source", f"./tmp/{scripts_dir}/setup_test_wifi.sh"],device_id=self.device_id)
+            if result.is_success:
+                self.logger.debug("Successfully executed Wifi bringup script")
+                return result    
+            else:
+                self.logger.error("Wifi script execution failed")
 
     def tearDown(self) -> None:
         """Tears down the SSH process if it is active.
