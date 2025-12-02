@@ -2,17 +2,18 @@ syntax = "proto3";
 
 package dutTestAgent;
 
-option go_package = "dut_test_agent/proto/dut_agent";
+option go_package = "owl_test_agent/proto/";
 
 message TestRequest {
   string device_id = 1;
-  map<string, string> test_params = 2; // Specific parameters for the test, e.g., "test_duration": "5"
+  map<string, string> test_params = 2; // Specific parameters for the test, e.g., "test_duration": "5"x
 }
 
 message TestResponse {
   bool passed = 1;
   string message = 2;
   map<string, string> details = 3; // Detailed key-value pairs of results
+  map<string, bytes> files = 4;
 }
 
 message TestInfo {
@@ -30,8 +31,9 @@ message GetAgentDetailsRequest {}
 
 message GetAgentDetailsResponse {
   string agent_version = 1; // The version of the agent software.
-  string hostname = 2;      // The hostname of the machine where the agent is running.
-  string device_id = 3;     // The ID of the Device Under Test (DUT) the agent is currently connected to.
+  string device_id = 2;     // The ID of the Device Under Test (DUT) the agent is currently connected to.
+  string wlan_mac = 3;
+  string ip_addr = 4;
 }
 
 service DutAgentService {
@@ -60,8 +62,7 @@ message RunCommandRequest {
   string command = 1;          // The command to execute (e.g., "ls", "adb shell getprop").
   repeated string args = 2;    // Arguments to pass to the command.
   int32 timeout_seconds = 3;   // Timeout for the command execution in seconds.
-  bool sudo = 4;               // If true, attempt to run the command with superuser privileges.
-  string working_directory = 5; // (Optional) Working directory for the command.
+  string working_directory = 4; // (Optional) Working directory for the command.
 }
 
 message RunCommandResponse {
@@ -74,10 +75,7 @@ message RunCommandResponse {
 message GetDeviceInfoRequest {}
 
 message GetDeviceInfoResponse {
-  string hostname = 1;      // The hostname of the DUT.
-  string os_name = 2;       // e.g., "Linux", "Android".
-  string os_version = 3;    // e.g., "13", "5.10.0-10-android".
-  string architecture = 4;  // e.g., "arm64", "x86_64".
+  string device_id = 1;      // The DeviceID of the badge.
   // A map for any other arbitrary key-value device properties.
   map<string, string> custom_fields = 5; 
 }

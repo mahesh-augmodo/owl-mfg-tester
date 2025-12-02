@@ -174,7 +174,6 @@ class ADBDutControllerPlug(htf.BasePlug):
                                 adb_command: List[str],
                                 expected_outputs: Union[List[str],
                                                         str, None] = None,
-                                # Changed return type
                                 device_id: Optional[str] = None) -> CommandResult:
         """
         Executes an ADB command, retrying up to CONF.max_cmd_retry times and 
@@ -196,7 +195,7 @@ class ADBDutControllerPlug(htf.BasePlug):
             self.run_adb_cmd, adb_command, expected_outputs, "ADB command", device_id
         )
 
-    # Changed return type
+
     def __remote_run_on_adb_host(self, remote_cmd: str) -> CommandResult:
         """
         Executes a command on the remote ADB host via SSH.
@@ -218,7 +217,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         # Call the generic subprocess runner
         return self.__run_subprocess_command(ssh_cmd, CONF.adb_timeout, "Remote SSH command")
 
-    # Changed return type
+
     def __remote_run_on_adb_host_and_check(self, remote_cmd: str, expected_outputs: Union[List[str], str, None]) -> CommandResult:
         """
         Executes a command on the remote ADB host and checks its output.
@@ -325,7 +324,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         self.logger.error(final_error_msg)
         return CommandResult(is_success=False, error_message=final_error_msg, stdout=result.stdout, stderr=result.stderr, exit_code=result.exit_code)
 
-    # Changed return type
+
     def setup_port_forwarding_to_adb_host(self) -> CommandResult:
         """Sets up an SSH tunnel for port forwarding to the ADB host.
 
@@ -437,7 +436,6 @@ class ADBDutControllerPlug(htf.BasePlug):
             self.logger.info(
                 "Local ADB provisioning in use (remote ADB host not configured).")
 
-        # Try and see if adb works automatically.
         list_devices_result = self.run_adb_cmd(["devices"],device_id=self.device_id)
 
         if not list_devices_result.is_success:
@@ -456,23 +454,6 @@ class ADBDutControllerPlug(htf.BasePlug):
         self.logger.error(f"Provisioning failed: {error_msg}")
         return CommandResult(is_success=False, error_message=error_msg, stdout=list_devices_result.stdout, stderr=list_devices_result.stderr, exit_code=list_devices_result.exit_code)
 
-    def get_device_id(self, adb_device_list: str) -> str:
-        """Processes the output of 'adb devices -l' to extract the DUT ID.
-
-        Args:
-            adb_device_list: A string containing the output from the 'adb devices -l' command.
-
-        Returns:
-            The DUT ID as a string if found, otherwise an empty string.
-        """
-        device_list = [line.strip()
-                       for line in adb_device_list.splitlines() if line.strip()]
-        if len(device_list) > 1:  # First line is "list of devices attached" so skip that
-            dut_ids = [line.split(" ")[0] for line in device_list[1:]]
-            if len(dut_ids) == 1:
-                self.device_id = dut_ids[0]
-        return self.device_id if self.device_id else ""
-    
     def push_scripts_to_device(self)-> CommandResult:
         if self.device_id:
             scripts_dir = CONF.scripts_path
