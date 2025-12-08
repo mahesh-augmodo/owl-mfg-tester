@@ -10,9 +10,14 @@ protobuf = "*"
 grpcio = "*"
 grpcio-tools = "*"
 tofupilot = "*"
+tomlkit = "*"
+paramiko = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.14"
 python_full_version = "3.14.0"
+
+[scripts]
+generate-pyproject-toml = "python scripts/generate_pyproject_toml.py"

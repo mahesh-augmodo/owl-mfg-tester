@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+
 @dataclass
 class CommandResult:
     """
@@ -51,4 +52,3 @@ class CommandResult:
         if self.stderr:
             output_parts.append(self.stderr)
         return "\n".join(output_parts)
-
