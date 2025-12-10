@@ -1,0 +1,52 @@
+# Binaries for programs
+dist/
+*.exe
+*.test
+*.prof
+
+# Go module dependencies
+# We are currently tracking go.sum, but vendor directory can be ignored if not explicitly used
+# vendor/
+
+# Generated files
+# Protobuf generated Go files
+proto/*.pb.go
+
+# Editor/IDE files
+.DS_Store
+.vscode/
+*.swp
+*~
+.idea/
+
+# Logs and temporary files
+*.log
+*tmp*
+/tmp/
+
+# Dependency directories
+# Generally ignored, but depends on project setup.
+# Node.js
+node_modules/
+
+# Python (if any Python scripts/tools are added later)
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Maven (if any Java/Maven projects are added later)
+target/
+
+# Gradle (if any Java/Gradle projects are added later)
+.gradle/
+build/
+
+# IDE specific files
+*.iml
+
+# OS generated files #
+.DS_Store
+.Trashes
+ehthumbs.db
+Thumbs.db

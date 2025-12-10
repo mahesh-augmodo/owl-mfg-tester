@@ -1,6 +1,6 @@
 module owl_test_agent
 
-go 1.24
+go 1.24.0
 
 require (
 	google.golang.org/grpc v1.64.0 // Use latest stable version
@@ -16,8 +16,9 @@ require (
 )
 
 require (
+	github.com/prometheus/procfs v0.19.2 // indirect
 	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 )
