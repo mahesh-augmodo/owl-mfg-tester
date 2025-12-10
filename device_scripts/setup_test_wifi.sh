@@ -117,7 +117,7 @@ fi
 echo ""
 echo "--- Configuring Wi-Fi for Test Network: $TEST_SSID on $WIFI_INTERFACE ---"
 
-/rkwifi.sh "$TEST_SSID" "$TEST_PASSWORD"
+/usr/bin/rkwifi.sh "$TEST_SSID" "$TEST_PASSWORD"
 
 # Clean up stale wpa_supplicant socket
 rm /var/run/wpa_supplicant/"$WIFI_INTERFACE" 2>/dev/null
@@ -130,8 +130,6 @@ sleep 5
 # Get IP address via DHCP
 echo "Attempting to get IP address on $WIFI_INTERFACE..."
 udhcpc -i "$WIFI_INTERFACE" > /dev/null 2>&1
-
-# --- 3. Verification ---
 
 echo ""
 echo "--- Verification and Reporting ---"

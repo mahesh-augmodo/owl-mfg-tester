@@ -1,9 +1,9 @@
 .PHONY: all python go clean
 
-PROTO_FILE := proto/test_agent.proto
+PROTO_FILE := proto/test_agent.proto # This is the full path from project root
 
 # Python settings
-PYTHON_OUT_DIR := mfg_tester/src/grpc_client_stubs
+PYTHON_OUT_DIR := mfg_tester/src/
 
 # Go settings
 GO_MODULE_ROOT_DIR := owl_test_agent
@@ -13,9 +13,10 @@ GO_GENERATED_DIR := $(GO_MODULE_ROOT_DIR)/proto/
 
 all: python go
 
-python:
+proto-python:
 	@echo "Compiling Python protobufs..."
 	mkdir -p $(PYTHON_OUT_DIR)
+	# Remove any existing generated files in the target output path to ensure a clean slate
 	python3 -m grpc_tools.protoc -I. \
 	  --python_out=$(PYTHON_OUT_DIR) \
 	  --pyi_out=$(PYTHON_OUT_DIR) \
@@ -23,7 +24,7 @@ python:
 	  $(PROTO_FILE)
 	@echo "Python protobufs compiled to $(PYTHON_OUT_DIR)"
 
-go:
+proto-go:
 	@echo "Compiling Go protobufs..."
 	# Ensure the target directory for Go generated files exists.
 	# This path is based on the 'go_package' option in your .proto file.
@@ -34,7 +35,7 @@ go:
 	  $(PROTO_FILE)
 	@echo "Go protobufs compiled to $(GO_GENERATED_DIR)"
 
-clean:
+proto-clean:
 	@echo "Cleaning generated files..."
 	rm -rf $(PYTHON_OUT_DIR)/*_pb2.py* $(PYTHON_OUT_DIR)/*_grpc.py*
 	# Clean Go generated files based on the GO_GENERATED_DIR

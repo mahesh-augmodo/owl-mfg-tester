@@ -2,38 +2,112 @@ syntax = "proto3";
 
 package dutTestAgent;
 
+import "google/protobuf/empty.proto";
+
 option go_package = "owl_test_agent/proto/";
-
-message TestRequest {
-  string device_id = 1;
-  map<string, string> test_params = 2; // Specific parameters for the test, e.g., "test_duration": "5"x
-}
-
-message TestResponse {
-  bool passed = 1;
-  string message = 2;
-  map<string, string> details = 3; // Detailed key-value pairs of results
-  map<string, bytes> files = 4;
-}
-
-message TestInfo {
-  string name = 1;         // The unique name of the test (e.g., "RunAccelTest").
-  string description = 2;  // A brief description of what the test does.
-}
-
-message GetAvailableTestsRequest {}
-
-message GetAvailableTestsResponse {
-  repeated TestInfo available_tests = 1; // List of tests available for execution.
-}
 
 message GetAgentDetailsRequest {}
 
 message GetAgentDetailsResponse {
   string agent_version = 1; // The version of the agent software.
   string device_id = 2;     // The ID of the Device Under Test (DUT) the agent is currently connected to.
-  string wlan_mac = 3;
+  string mac_addr = 3;
   string ip_addr = 4;
+}
+
+message OLEDSettings {
+	string I2CBusName = 1;
+	int32 DevAddr = 2;
+	int32 Width = 3;
+	int32 Height   = 4;  
+	int32 PowerPin  = 5;
+  int32 ResetPin  = 6;
+} 
+
+message SetOLEDTextRequest {
+  string text = 1;
+}
+
+message BatterySettings {
+  string device_name = 1;
+  string voltage_node = 2;
+  string current_node = 3;
+  string temp_node = 4;
+}
+
+message GetBatteryReadingsRequest {}
+
+message GetBatteryReadingsResponse {
+  float millivolts = 1;
+  float milliamps = 2;
+  float celsius_temperature = 3;
+  bool present = 4;
+  string status = 5; // e.g., "Charging", "Discharging", "Full"
+}
+
+message EventDevice {
+  string device_name = 1;
+  string device_path = 2;
+  string device_type = 3;
+  string sysfs_path = 4;
+}
+
+message GetEventReportOverDurationRequest {
+  string device_path = 1;
+  int32 duration_seconds = 2;
+}
+
+message GetEventReportOverDurationResponse {
+  string csv_report = 1;
+}
+
+message DiscoverEventDevicesRequest {}
+
+message DiscoverEventDevicesResponse {
+  repeated EventDevice devices = 1;
+}
+
+message BuzzerSettings {
+  string device_path = 1;
+}
+
+message SetBuzzerRequest {
+  bool on = 1;
+}
+
+message GetSystemStateRequest {
+  int32 idle_duration_seconds = 1; // Duration for idle percentage calculation
+  string cpu_temperature_sysfs_path = 2; // Path to CPU temperature sysfs file
+}
+
+message GetSystemStateResponse {
+  string serial = 1;
+  float cpu_temperature = 2; // In Celsius
+  float cpu_idle_percent = 3;
+  uint64 total_memory_kb = 4;
+  float cpu_load_average = 5;
+}
+
+message UploadFileRequest {
+  string filename = 1;
+  bytes chunk_data = 2;
+  int64 offset = 3;
+  int64 total_size = 4;
+}
+
+message UploadFileResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message DownloadFileRequest {
+  string filename = 1;
+}
+
+message DownloadFileResponse {
+  bytes chunk_data = 1;
+  int64 offset = 2;
+  int64 total_size = 3;
 }
 
 service DutAgentService {
@@ -41,7 +115,6 @@ service DutAgentService {
   // This can be used as a simple health check and to verify agent connectivity.
   rpc GetAgentDetails (GetAgentDetailsRequest) returns (GetAgentDetailsResponse);
 
-  // RunCommand executes a shell command on the DUT.
   rpc RunCommand (RunCommandRequest) returns (RunCommandResponse);
 
   // GetDeviceInfo retrieves basic identification and status information about the DUT.
@@ -50,12 +123,41 @@ service DutAgentService {
   // StreamExecutionLogs enables server-side streaming of execution logs from the agent to the client.
   rpc StreamExecutionLogs (StreamExecutionLogsRequest) returns (stream LogEntry);
   
-  // RunTest executes a specific hardware test on the DUT.
-  // The type of test and its parameters are specified within the TestRequest.
-  rpc RunTest(TestRequest) returns (TestResponse);
+  // ConfigureOLEDDisplay sets the configuration for the OLED display.
+  rpc ConfigureOLEDDisplay (OLEDSettings) returns (google.protobuf.Empty);
 
-  // GetAvailableTests retrieves a list of hardware tests that can be executed on the DUT.
-  rpc GetAvailableTests (GetAvailableTestsRequest) returns (GetAvailableTestsResponse);
+  // SetOLEDStaticText displays a static text message on the OLED.
+  rpc SetOLEDStaticText (SetOLEDTextRequest) returns (google.protobuf.Empty);
+
+  // SetOLEDScrollingText displays a scrolling text message on the OLED.
+  rpc SetOLEDScrollingText (SetOLEDTextRequest) returns (google.protobuf.Empty);
+
+  // ConfigureBattery sets the configuration for battery readings.
+  rpc ConfigureBattery (BatterySettings) returns (google.protobuf.Empty);
+
+  // GetBatteryReadings retrieves the current battery readings.
+  rpc GetBatteryReadings (GetBatteryReadingsRequest) returns (GetBatteryReadingsResponse);
+
+  // DiscoverEventDevices scans for available input event devices.
+  rpc DiscoverEventDevices (DiscoverEventDevicesRequest) returns (DiscoverEventDevicesResponse);
+
+  // GetEventReportOverDuration captures and reports input events for a specified duration as a CSV string.
+  rpc GetEventReportOverDuration (GetEventReportOverDurationRequest) returns (GetEventReportOverDurationResponse);
+
+  // ConfigureBuzzer sets the device path for the buzzer.
+  rpc ConfigureBuzzer (BuzzerSettings) returns (google.protobuf.Empty);
+
+  // SetBuzzer turns the buzzer on or off.
+  rpc SetBuzzer (SetBuzzerRequest) returns (google.protobuf.Empty);
+
+  // GetSystemState retrieves various system related information (CPU, memory, serial).
+  rpc GetSystemState (GetSystemStateRequest) returns (GetSystemStateResponse);
+
+  // UploadFile allows client to upload a file to the agent.
+  rpc UploadFile (stream UploadFileRequest) returns (UploadFileResponse);
+
+  // DownloadFile allows client to download a file from the agent.
+  rpc DownloadFile (DownloadFileRequest) returns (stream DownloadFileResponse);
 }
 
 message RunCommandRequest {

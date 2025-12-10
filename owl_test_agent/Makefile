@@ -1,6 +1,6 @@
 # Configuration
 AGENT_NAME := owl_test_agent
-DEVICE_SERIAL ?= eb93693d76da8fa0
+DEVICE_SERIAL ?= 4dbe780b65b17a32
 REMOTE_PATH := /tmp/$(AGENT_NAME)
 
 .PHONY: all build-dev install-dev clean

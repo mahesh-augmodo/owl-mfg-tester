@@ -1,6 +1,5 @@
 import subprocess
 import time
-import os
 from typing import Optional, List, Union, Callable
 import openhtf as htf
 from openhtf.util.configuration import CONF
@@ -68,7 +67,8 @@ class ADBDutControllerPlug(htf.BasePlug):
             current_command_result: CommandResult = (
                 command_executor(command_args, device_id)
                 if command_executor == self.run_adb_cmd
-                # For __remote_run_on_adb_host, command_args is already a string
+                # For __remote_run_on_adb_host, command_args is already a
+                # string
                 else command_executor(command_args)
             )
             last_command_result = current_command_result  # Update last result
@@ -76,36 +76,57 @@ class ADBDutControllerPlug(htf.BasePlug):
 
             if current_command_result.is_success:  # Command executed successfully
                 # Output validation passed
-                if not expected_outputs_list or any(exp in current_output for exp in expected_outputs_list):
-                    msg = f"{command_context_name} check for '{log_command_str}' passed on try {i+1}."
+                if not expected_outputs_list or any(
+                        exp in current_output for exp in expected_outputs_list):
+                    msg = f"{command_context_name} check for '{log_command_str}' passed on try {
+                        i +
+                        1}."
                     self.logger.debug(msg)
-                    return CommandResult(is_success=True, stdout=current_command_result.stdout, stderr=current_command_result.stderr, exit_code=current_command_result.exit_code, error_message=msg)
+                    return CommandResult(
+                        is_success=True,
+                        stdout=current_command_result.stdout,
+                        stderr=current_command_result.stderr,
+                        exit_code=current_command_result.exit_code,
+                        error_message=msg)
                 else:  # Output validation failed, so log and continue retry
-                    msg = f"{command_context_name} check for '{log_command_str}' failed on output validation on try {i+1}. Output: {current_output.strip()}"
+                    msg = f"{command_context_name} check for '{log_command_str}' failed on output validation on try {
+                        i +
+                        1}. Output: {
+                        current_output.strip()}"
                     self.logger.debug(msg)
             else:  # Command execution itself failed
-                msg = f"Execution of {command_context_name} '{log_command_str}' failed on try {i+1}. Error: {current_command_result.error_message or current_output.strip()}"
+                msg = f"Execution of {command_context_name} '{log_command_str}' failed on try {
+                    i +
+                    1}. Error: {
+                    current_command_result.error_message or current_output.strip()}"
                 self.logger.debug(msg)
 
-            # If we reach here, either command failed or validation failed, so continue the retry loop
+            # If we reach here, either command failed or validation failed, so
+            # continue the retry loop
             if i < CONF.max_cmd_retry - 1:
                 self.logger.debug(
                     f"Waiting {CONF.cmd_retry_interval}s before retry...")
                 time.sleep(CONF.cmd_retry_interval)
 
         # If the loop completes without returning, all retries failed.
-        # Construct final CommandResult using details from the last attempt if available.
-        final_error_msg = f"{command_context_name} '{log_command_str}' failed to execute or validate after {CONF.max_cmd_retry} retries."
+        # Construct final CommandResult using details from the last attempt if
+        # available.
+        final_error_msg = f"{command_context_name} '{log_command_str}' failed to execute or validate after {
+            CONF.max_cmd_retry} retries."
         if last_command_result and last_command_result.error_message:
-            final_error_msg += f" Last error: {last_command_result.error_message}."
+            final_error_msg += f" Last error: {
+                last_command_result.error_message}."
         elif last_command_result and last_command_result.full_output:
-            final_error_msg += f" Last output: {last_command_result.full_output.strip()}."
+            final_error_msg += f" Last output: {
+                last_command_result.full_output.strip()}."
 
         self.logger.error(final_error_msg)
-        return CommandResult(is_success=False, error_message=final_error_msg,
-                             stdout=last_command_result.stdout if last_command_result else None,
-                             stderr=last_command_result.stderr if last_command_result else None,
-                             exit_code=last_command_result.exit_code if last_command_result else None)
+        return CommandResult(
+            is_success=False,
+            error_message=final_error_msg,
+            stdout=last_command_result.stdout if last_command_result else None,
+            stderr=last_command_result.stderr if last_command_result else None,
+            exit_code=last_command_result.exit_code if last_command_result else None)
 
     def __run_subprocess_command(
         self,
@@ -136,7 +157,8 @@ class ADBDutControllerPlug(htf.BasePlug):
                 timeout=timeout,
             )
         except subprocess.TimeoutExpired:
-            error_msg = f"Error: {context_name} timed out after {timeout}s: {' '.join(full_command)}"
+            error_msg = f"Error: {context_name} timed out after {timeout}s: {
+                ' '.join(full_command)}"
             self.logger.error(error_msg)
             return CommandResult(is_success=False, error_message=error_msg)
         except Exception as e:
@@ -153,13 +175,27 @@ class ADBDutControllerPlug(htf.BasePlug):
         if exit_code == 0:
             self.logger.debug(
                 f"{context_name} successful. Output length: {len(stdout or '')}")
-            return CommandResult(is_success=True, stdout=stdout, stderr=stderr, exit_code=exit_code)
+            return CommandResult(
+                is_success=True,
+                stdout=stdout,
+                stderr=stderr,
+                exit_code=exit_code)
         else:
-            error_msg = f"{context_name} Failed (Code: {exit_code}):\nSTDOUT: {stdout or ''}\nSTDERR: {stderr or ''}"
+            error_msg = f"{context_name} Failed (Code: {exit_code}):\nSTDOUT: {
+                stdout or ''}\nSTDERR: {
+                stderr or ''}"
             self.logger.error(error_msg)
-            return CommandResult(is_success=False, error_message=error_msg, stdout=stdout, stderr=stderr, exit_code=exit_code)
+            return CommandResult(
+                is_success=False,
+                error_message=error_msg,
+                stdout=stdout,
+                stderr=stderr,
+                exit_code=exit_code)
 
-    def run_adb_cmd(self, adb_command: List[str], device_id: Optional[str] = None) -> CommandResult:
+    def run_adb_cmd(
+            self,
+            adb_command: List[str],
+            device_id: Optional[str] = None) -> CommandResult:
         """
         Executes a general ADB command locally.
         (Refactored to use _run_subprocess_command)
@@ -190,7 +226,8 @@ class ADBDutControllerPlug(htf.BasePlug):
         # Add the actual ADB command arguments
         full_command.extend(adb_command)
 
-        return self.__run_subprocess_command(full_command, CONF.adb_timeout, "Local ADB command")
+        return self.__run_subprocess_command(
+            full_command, CONF.adb_timeout, "Local ADB command")
 
     def __run_adb_cmd_and_check(self,
                                 adb_command: List[str],
@@ -198,7 +235,7 @@ class ADBDutControllerPlug(htf.BasePlug):
                                                         str, None] = None,
                                 device_id: Optional[str] = None) -> CommandResult:
         """
-        Executes an ADB command, retrying up to CONF.max_cmd_retry times and 
+        Executes an ADB command, retrying up to CONF.max_cmd_retry times and
         checking the output for expected strings.
 
         (Refactored to use _run_command_with_retry_and_check)
@@ -206,7 +243,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         Args:
             adb_command: The command to execute (e.g., ['shell', 'ls', '/data']).
             expected_outputs: A string or list of strings to search for in the
-                                command's stdout upon successful execution. If None, 
+                                command's stdout upon successful execution. If None,
                                 only command execution success is checked.
             device_id: Optional ID of the target device.
 
@@ -214,8 +251,7 @@ class ADBDutControllerPlug(htf.BasePlug):
             A CommandResult object indicating success/failure and containing output details.
         """
         return self._run_command_with_retry_and_check(
-            self.run_adb_cmd, adb_command, expected_outputs, "ADB command", device_id
-        )
+            self.run_adb_cmd, adb_command, expected_outputs, "ADB command", device_id)
 
     def __remote_run_on_adb_host(self, remote_cmd: str) -> CommandResult:
         """
@@ -236,9 +272,11 @@ class ADBDutControllerPlug(htf.BasePlug):
         ssh_cmd.append(remote_cmd)
 
         # Call the generic subprocess runner
-        return self.__run_subprocess_command(ssh_cmd, CONF.adb_timeout, "Remote SSH command")
+        return self.__run_subprocess_command(
+            ssh_cmd, CONF.adb_timeout, "Remote SSH command")
 
-    def __remote_run_on_adb_host_and_check(self, remote_cmd: str, expected_outputs: Union[List[str], str, None]) -> CommandResult:
+    def __remote_run_on_adb_host_and_check(
+            self, remote_cmd: str, expected_outputs: Union[List[str], str, None]) -> CommandResult:
         """
         Executes a command on the remote ADB host and checks its output.
 
@@ -257,10 +295,17 @@ class ADBDutControllerPlug(htf.BasePlug):
             A CommandResult object indicating success/failure and containing output details. # Updated docstring
         """
         return self._run_command_with_retry_and_check(
-            self.__remote_run_on_adb_host, remote_cmd, expected_outputs, "Remote SSH command"
-        )
+            self.__remote_run_on_adb_host,
+            remote_cmd,
+            expected_outputs,
+            "Remote SSH command")
 
-    def adb_push(self, local_path: str, remote_path: str, device_id: Optional[str] = None, timeout: Optional[int] = None) -> CommandResult:
+    def adb_push(
+            self,
+            local_path: str,
+            remote_path: str,
+            device_id: Optional[str] = None,
+            timeout: Optional[int] = None) -> CommandResult:
         """
         Executes the 'adb push' command to copy a file to the DUT.
         (Refactored to use _run_subprocess_command for execution)
@@ -300,14 +345,26 @@ class ADBDutControllerPlug(htf.BasePlug):
             status_output = result.stderr or result.stdout  # Use stderr or stdout for status
 
             # Check for standard success indicators
-            if status_output and ("pushed" in status_output or "bytes in" in status_output or "1 file pushed" in status_output):
+            if status_output and (
+                    "pushed" in status_output or "bytes in" in status_output or "1 file pushed" in status_output):
                 self.logger.debug(
                     f"Push confirmed successful: {status_output}")
-                return CommandResult(is_success=True, stdout=result.stdout, stderr=result.stderr, exit_code=result.exit_code, error_message=f"Push successful: {status_output}")
+                return CommandResult(
+                    is_success=True,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    exit_code=result.exit_code,
+                    error_message=f"Push successful: {status_output}")
             else:
-                # Minimal output often indicates success but is less descriptive.
+                # Minimal output often indicates success but is less
+                # descriptive.
                 self.logger.debug("Push successful, minimal output.")
-                return CommandResult(is_success=True, stdout=result.stdout, stderr=result.stderr, exit_code=result.exit_code, error_message="Push successful, no detailed output returned.")
+                return CommandResult(
+                    is_success=True,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    exit_code=result.exit_code,
+                    error_message="Push successful, no detailed output returned.")
         else:
             # If _run_subprocess_command returned False, it means there was an execution error or timeout.
             # The 'output' already contains the error message.
@@ -326,7 +383,8 @@ class ADBDutControllerPlug(htf.BasePlug):
             result = self.run_adb_cmd(["kill-server"])
 
             # Define the success condition clearly
-            # ADB kill-server can return non-zero but still indicate success if server was already dead
+            # ADB kill-server can return non-zero but still indicate success if
+            # server was already dead
             success_messages = ["failed to read response from server",
                                 "error: protocol fault", "daemon not running"]
             is_effectively_killed = result.is_success or any(
@@ -338,13 +396,25 @@ class ADBDutControllerPlug(htf.BasePlug):
                 return CommandResult(is_success=True, error_message=msg)
 
             self.logger.debug(
-                f"Attempt to kill local ADB failed on try {i+1}. Error: {result.error_message}. Output: {result.full_output.strip()}")
+                f"Attempt to kill local ADB failed on try {
+                    i +
+                    1}. Error: {
+                    result.error_message}. Output: {
+                    result.full_output.strip()}")
             if i < CONF.max_cmd_retry - 1:
                 time.sleep(CONF.cmd_retry_interval)
 
-        final_error_msg = f"Failed to kill local ADB server after {CONF.max_cmd_retry} retries. Last error: {result.error_message}. Last output: {result.full_output.strip()}"
+        final_error_msg = f"Failed to kill local ADB server after {
+            CONF.max_cmd_retry} retries. Last error: {
+            result.error_message}. Last output: {
+            result.full_output.strip()}"
         self.logger.error(final_error_msg)
-        return CommandResult(is_success=False, error_message=final_error_msg, stdout=result.stdout, stderr=result.stderr, exit_code=result.exit_code)
+        return CommandResult(
+            is_success=False,
+            error_message=final_error_msg,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            exit_code=result.exit_code)
 
     def setup_port_forwarding_to_adb_host(self) -> CommandResult:
         """Sets up an SSH tunnel for port forwarding to the ADB host.
@@ -356,13 +426,14 @@ class ADBDutControllerPlug(htf.BasePlug):
             A CommandResult object indicating success/failure.
         """
         self.logger.info(
-            f"Starting SSH tunnel to {CONF.adb_host} on port {CONF.adb_host_port}")
-        ssh_port_forwarding = ["ssh",
-                               "-vN",
-                               "-L",
-                               f"{CONF.adb_host_port}:localhost:{CONF.adb_host_port}",
-                               f"{CONF.adb_host}"
-                               ]
+            f"Starting SSH tunnel to {
+                CONF.adb_host} on port {
+                CONF.adb_host_port}")
+        ssh_port_forwarding = [
+            "ssh", "-vN", "-L", f"{
+                CONF.adb_host_port}:localhost:{
+                CONF.adb_host_port}", f"{
+                CONF.adb_host}"]
         ssh_tunnel_start_time = time.time()
 
         self.ssh_process = subprocess.Popen(
@@ -376,23 +447,33 @@ class ADBDutControllerPlug(htf.BasePlug):
             last_result = result
 
             if result.is_success and "device" in result.full_output:
-                msg = f"SSH tunnel active with pid: {self.ssh_process.pid}. ADB devices list verified."
+                msg = f"SSH tunnel active with pid: {
+                    self.ssh_process.pid}. ADB devices list verified."
                 self.logger.info(msg)
                 return CommandResult(is_success=True, error_message=msg)
 
             self.logger.debug(
-                f"ADB check failed. Error: {result.error_message}. Output: {result.full_output.strip()}")
+                f"ADB check failed. Error: {
+                    result.error_message}. Output: {
+                    result.full_output.strip()}")
             time.sleep(1)  # Wait before retrying ADB check
 
         final_error_msg = "SSH tunnel setup failed: ADB verification timed out."
         self.logger.error(final_error_msg)
 
-        # Streamlined return, using last_result attributes directly if available
+        # Streamlined return, using last_result attributes directly if
+        # available
         if last_result:
-            return CommandResult(is_success=False, error_message=final_error_msg,
-                                 stdout=last_result.stdout, stderr=last_result.stderr, exit_code=last_result.exit_code)
+            return CommandResult(
+                is_success=False,
+                error_message=final_error_msg,
+                stdout=last_result.stdout,
+                stderr=last_result.stderr,
+                exit_code=last_result.exit_code)
         else:
-            return CommandResult(is_success=False, error_message=final_error_msg)
+            return CommandResult(
+                is_success=False,
+                error_message=final_error_msg)
 
     def restart_remote_adb(self) -> CommandResult:
         """Restarts the ADB server on the remote host.
@@ -403,12 +484,14 @@ class ADBDutControllerPlug(htf.BasePlug):
             A CommandResult object indicating success/failure.
         """
         self.logger.info("Attempting to kill remote ADB server.")
-        # We don't need to check the result here for success, as the start command will fail if it's still running
+        # We don't need to check the result here for success, as the start
+        # command will fail if it's still running
         kill_result = self.__remote_run_on_adb_host_and_check(
             "adb kill-server", ["cannot connect to daemon", "error: protocol fault"])
         if not kill_result.is_success:
             self.logger.debug(
-                f"Remote ADB server kill attempt indicated failure or not running: {kill_result.error_message}")
+                f"Remote ADB server kill attempt indicated failure or not running: {
+                    kill_result.error_message}")
 
         self.logger.info("Attempting to start remote ADB server.")
         start_result = self.__remote_run_on_adb_host_and_check(
@@ -416,11 +499,20 @@ class ADBDutControllerPlug(htf.BasePlug):
 
         if start_result.is_success:
             self.logger.debug("Remote ADB server started successfully.")
-            return CommandResult(is_success=True, error_message="Remote ADB server started successfully.")
+            return CommandResult(
+                is_success=True,
+                error_message="Remote ADB server started successfully.")
         else:
-            final_error_msg = f"Failed to start remote ADB server after retries. Last error: {start_result.error_message}. Last output: {start_result.full_output.strip()}"
+            final_error_msg = f"Failed to start remote ADB server after retries. Last error: {
+                start_result.error_message}. Last output: {
+                start_result.full_output.strip()}"
             self.logger.error(final_error_msg)
-            return CommandResult(is_success=False, error_message=final_error_msg, stdout=start_result.stdout, stderr=start_result.stderr, exit_code=start_result.exit_code)
+            return CommandResult(
+                is_success=False,
+                error_message=final_error_msg,
+                stdout=start_result.stdout,
+                stderr=start_result.stderr,
+                exit_code=start_result.exit_code)
 
     def setup_remote_adb(self) -> Optional[CommandResult]:
         self.logger.info("Setting up remote ADB host for provisioning.")
@@ -452,7 +544,8 @@ class ADBDutControllerPlug(htf.BasePlug):
         Returns:
             A CommandResult object indicating success/failure.
         """
-        # Kill any lingering local server that will not allow us to bind to adb port
+        # Kill any lingering local server that will not allow us to bind to adb
+        # port
         if self.use_remote_adb:
             cmd = self.setup_remote_adb()
             if cmd:
@@ -474,13 +567,19 @@ class ADBDutControllerPlug(htf.BasePlug):
             f"ADB Devices returned: {list_devices_result.full_output}")
 
         if self.device_id in list_devices_result.stdout:
-            info_msg = f"ADB connected successfully to DUT ID : {self.device_id}"
+            info_msg = f"ADB connected successfully to DUT ID : {
+                self.device_id}"
             self.logger.info(info_msg)
             return CommandResult(is_success=True, error_message=info_msg)
 
         error_msg = f"ADB could not connect to DUT ID {self.device_id}."
         self.logger.error(f"Provisioning failed: {error_msg}")
-        return CommandResult(is_success=False, error_message=error_msg, stdout=list_devices_result.stdout, stderr=list_devices_result.stderr, exit_code=list_devices_result.exit_code)
+        return CommandResult(
+            is_success=False,
+            error_message=error_msg,
+            stdout=list_devices_result.stdout,
+            stderr=list_devices_result.stderr,
+            exit_code=list_devices_result.exit_code)
 
     def push_scripts_to_device(self) -> CommandResult:
         if self.device_id:
@@ -503,8 +602,10 @@ class ADBDutControllerPlug(htf.BasePlug):
     def bringup_wifi_on_device(self) -> CommandResult:
         if self.device_id:
             scripts_dir = CONF.scripts_path
-            result = self.run_adb_cmd(
-                ["shell", "source", f"./tmp/{scripts_dir}/setup_test_wifi.sh"], device_id=self.device_id)
+            result = self.run_adb_cmd(["shell",
+                                       "source",
+                                       f"./tmp/{scripts_dir}/setup_test_wifi.sh"],
+                                      device_id=self.device_id)
             if result.is_success:
                 self.logger.debug("Successfully executed Wifi bringup script")
             else:
