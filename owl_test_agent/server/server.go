@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os" // For parsing file permissions if needed
 	"owl_test_agent/util"
+	"sync"
 
 	pb "owl_test_agent/proto"
 
@@ -20,6 +21,11 @@ type Server struct {
 	DeviceId     string
 	MacAddr      string
 	IPAddr       string
+
+	// Channel to update scrolling text on the OLED, nil if no scrolling is active.
+	scrollingTextChan chan<- string
+	// Mutex to protect access to scrollingTextChan
+	scrollingTextMu sync.Mutex
 }
 
 func NewServer() *Server {
@@ -39,6 +45,7 @@ func NewServer() *Server {
 		DeviceId:     deviceId,
 		MacAddr:      macaddr,
 		IPAddr:       ipaddr,
+		// scrollingTextChan and scrollingTextMu are initialized to their zero values (nil and unlocked mutex)
 	}
 }
 
@@ -66,6 +73,16 @@ func (s *Server) ConfigureOLEDDisplay(ctx context.Context, in *pb.OLEDSettings) 
 
 func (s *Server) SetOLEDStaticText(ctx context.Context, in *pb.SetOLEDTextRequest) (*emptypb.Empty, error) {
 	slog.Debug(fmt.Sprintf("received SetOLEDStaticText request with text: %s", in.Text))
+
+	s.scrollingTextMu.Lock()
+	if s.scrollingTextChan != nil {
+		// Stop any active scrolling
+		slog.Info("Stopping active OLED scrolling text due to SetOLEDStaticText call.")
+		s.scrollingTextChan <- "" // Send empty string to signal stop
+		s.scrollingTextChan = nil
+	}
+	s.scrollingTextMu.Unlock()
+
 	if err := util.SetStaticText(in.Text); err != nil {
 		slog.Error("failed to set OLED static text", "error", err)
 		return nil, err
@@ -76,11 +93,26 @@ func (s *Server) SetOLEDStaticText(ctx context.Context, in *pb.SetOLEDTextReques
 
 func (s *Server) SetOLEDScrollingText(ctx context.Context, in *pb.SetOLEDTextRequest) (*emptypb.Empty, error) {
 	slog.Debug(fmt.Sprintf("received SetOLEDScrollingText request with text: %s", in.Text))
-	if err := util.SetScrollingText(in.Text); err != nil {
-		slog.Error("failed to set OLED scrolling text", "error", err)
-		return nil, err
+
+	s.scrollingTextMu.Lock()
+	defer s.scrollingTextMu.Unlock()
+
+	if s.scrollingTextChan != nil {
+		// Update existing scrolling text
+		slog.Info("Updating existing OLED scrolling text.", "newText", in.Text)
+		s.scrollingTextChan <- in.Text
+	} else {
+		// Start new scrolling text
+		slog.Info("Starting new OLED scrolling text.", "initialText", in.Text)
+		updateChan, err := util.SetScrollingText(in.Text)
+		if err != nil {
+			slog.Error("failed to start OLED scrolling text", "error", err)
+			return nil, err
+		}
+		s.scrollingTextChan = updateChan
 	}
-	slog.Info("OLED scrolling text set successfully")
+
+	slog.Info("OLED scrolling text command processed successfully")
 	return &emptypb.Empty{}, nil
 }
 

@@ -46,13 +46,14 @@ func GetCPUTemperature(sysfsPath string) (float32, error) {
 	temp_str, err := readSysfsValue(sysfsPath)
 	if err != nil {
 		slog.Error("unable to read CPU temperature", "error", err)
-
+		return 0, err // Return error
 	}
 	cpu_temp, err := strconv.Atoi(temp_str)
 	if err != nil {
-		slog.Error("unable to read CPU temperature", "error", err)
+		slog.Error("unable to parse CPU temperature", "error", err) // Changed log message
+		return 0, err // Return error
 	}
-	return (float32(cpu_temp) / 1e3), nil
+	return (float32(cpu_temp) / 1e3), nil // Convert to Celsius from millicelsius
 }
 
 // GetCPUIdlePercentage measures the CPU idle percentage over a specified duration.

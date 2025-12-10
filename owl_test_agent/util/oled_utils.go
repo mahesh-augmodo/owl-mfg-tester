@@ -103,6 +103,7 @@ func SetupOLED(settings *pb.OLEDSettings) error {
 	// This is done by effectively creating a new sync.Once instance.
 	// This ensures that the OLED device can be re-initialized if settings change.
 	oledDeviceInitOnce = sync.Once{}
+	oledInitError = nil // Clear previous device init error
 
 	oledDeviceInitOnce.Do(func() {
 		oledDeviceInstance, oledInitError = InitOLED(settings)
@@ -182,17 +183,17 @@ func SetStaticText(text string) error {
 }
 
 // SetScrollingText starts a goroutine to continuously draw and scroll text on the OLED.
-// Note: This starts a background process and typically requires a mechanism (not shown here)
-// to stop it if you want to switch to SetStaticText.
-func SetScrollingText(text string) error {
+// It returns a channel that can be used to update the scrolling text, and an error if initialization fails.
+// Send an empty string ("") to the update channel to stop the scrolling.
+func SetScrollingText(initialText string) (chan<- string, error) {
 	dev, err := GetOLED()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	face, err := loadFontFace(fonts.ChineseFont, 24)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// 1. INITIALIZE BUFFER AND COLORS ONCE
@@ -200,52 +201,83 @@ func SetScrollingText(text string) error {
 	clearColor := image.NewUniform(image1bit.Off)
 	whiteColor := image.NewUniform(image1bit.On)
 
-	scrollOffset := fixed.I(dev.Bounds().Dx())
 	textY := fixed.I(dev.Bounds().Dy()/2) + face.Metrics().Descent // Vertical position
 
-	drawer := font.Drawer{
-		Dst:  img,
-		Src:  whiteColor,
-		Face: face,
-		Dot:  fixed.Point26_6{X: scrollOffset, Y: textY},
+	// Create a channel for text updates
+	textUpdateChan := make(chan string)
+	// Create a channel to signal stopping the goroutine
+	stopChan := make(chan struct{})
+
+	// Local function to prepare the scrolling text string
+	prepareScrollingText := func(txt string) (fixed.Int26_6, string) {
+		gap := strings.Repeat(" ", max(2, utf8.RuneCountInString(txt)/2))
+		scrollingText := txt + gap
+		scrollResetDistance := font.MeasureString(face, scrollingText)
+		scrollingText = scrollingText + txt // Double the text for continuous loop
+		return scrollResetDistance, scrollingText
 	}
 
-	// Prepare scrolling text string
-	const targetFrameRate = 12
-	targetFrameTime := time.Second / time.Duration(targetFrameRate)
-	gap := strings.Repeat(" ", max(2, utf8.RuneCountInString(text)/2))
-	scrollingText := text + gap
-	scrollResetDistance := drawer.MeasureString(scrollingText)
-	scrollingText = scrollingText + text // Double the text for continuous loop
+	scrollingText := initialText
+	scrollResetDistance, preparedScrollingText := prepareScrollingText(scrollingText)
+	scrollOffset := fixed.I(dev.Bounds().Dx())
 
 	go func() {
+		defer close(stopChan) // Ensure stopChan is closed when goroutine exits
+
+		const targetFrameRate = 12
+		targetFrameTime := time.Second / time.Duration(targetFrameRate)
+
+		drawer := font.Drawer{
+			Dst:  img,
+			Src:  whiteColor,
+			Face: face,
+		}
+
 		for { // Infinite Loop
-			renderStartTime := time.Now()
-			scrollOffset -= fixed.I(5) // Move 5 units (1 full pixel)
+			select {
+			case newText := <-textUpdateChan:
+				if newText == "" { // Signal to stop scrolling
+					slog.Info("Stopping OLED scrolling text goroutine.")
+					// Clear display on stop
+					draw.Draw(img, img.Bounds(), clearColor, image.Point{}, draw.Src)
+					dev.Write(img.Pix)
+					return // Exit goroutine
+				}
+				slog.Info("Updating OLED scrolling text", "newText", newText)
+				scrollingText = newText
+				scrollResetDistance, preparedScrollingText = prepareScrollingText(scrollingText)
+				scrollOffset = fixed.I(dev.Bounds().Dx()) // Reset scroll position for new text
+				drawer.Dot.X = scrollOffset // Reset drawer position
+			case <-time.After(targetFrameTime):
+				renderStartTime := time.Now()
+				
+				scrollOffset -= fixed.I(5) // Move 5 units (1 full pixel)
 
-			if scrollOffset < -scrollResetDistance {
-				scrollOffset = fixed.I(0)
-			}
+				if scrollOffset < -scrollResetDistance {
+					scrollOffset = fixed.I(0)
+				}
 
-			draw.Draw(img, img.Bounds(), clearColor, image.Point{}, draw.Src)
+				draw.Draw(img, img.Bounds(), clearColor, image.Point{}, draw.Src)
 
-			// Update drawer position and draw
-			drawer.Dot.X = scrollOffset
-			drawer.DrawString(scrollingText)
-			if _, err := dev.Write(img.Pix); err != nil {
-				slog.Error("Error during device write in scroll loop:", "error", err)
-				return
-			}
+				// Update drawer position and draw
+				drawer.Dot.X = scrollOffset
+				drawer.Dot.Y = textY
+				drawer.DrawString(preparedScrollingText)
+				if _, err := dev.Write(img.Pix); err != nil {
+					slog.Error("Error during device write in scroll loop:", "error", err)
+					return // Exit goroutine on write error
+				}
 
-			// Frame rate control
-			elapsedTime := time.Since(renderStartTime)
-			if elapsedTime < targetFrameTime {
-				time.Sleep(targetFrameTime - elapsedTime)
-			} else {
-				slog.Warn("Frame rendering took too long", "elapsedtime", elapsedTime)
-				// Optionally drop or adjust scroll speed to compensate
+				// Frame rate control
+				elapsedTime := time.Since(renderStartTime)
+				if elapsedTime < targetFrameTime {
+					time.Sleep(targetFrameTime - elapsedTime)
+				} else {
+					slog.Warn("Frame rendering took too long", "elapsedtime", elapsedTime)
+					// Optionally drop or adjust scroll speed to compensate
+				}
 			}
 		}
 	}()
-	return nil
+	return textUpdateChan, nil
 }
