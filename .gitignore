@@ -36,7 +36,7 @@ htmlcov/
 .idea/          # IntelliJ IDEA
 *.swp           # Vim swap files
 *~              # Emacs auto-save files
-.DS_Store       # macOS folder metadata
+**/.DS_Store       # macOS folder metadata
 .env            # dotenv environment files
 .venv/          # Virtual environment directory
 venv/
@@ -52,3 +52,6 @@ temp/
 
 # OS generated files
 .Trash-*-*/
+
+# Reports
+reports/*
