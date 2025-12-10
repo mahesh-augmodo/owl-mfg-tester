@@ -1,10 +1,17 @@
 #!/bin/sh
 
 # === CONFIGURATION SOURCING ===
-# Loads configuration variables (WIFI_INTERFACE, TEST_SSID, TEST_PASSWORD).
+# Loads configuration variables (WIFI_INTERFACE).
 WIFI_INTERFACE="wlan0"
-TEST_SSID="AugmodoTestWiFi5G"
-TEST_PASSWORD="augmodo12@"
+
+# Argument parsing
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: $0 <SSID> <PASSWORD>"
+    exit 1
+fi
+
+TEST_SSID="$1"
+TEST_PASSWORD="$2"
 
 # ==============================================================================
 # FUNCTION 1: list_wifi_networks [BAND]
@@ -12,7 +19,7 @@ TEST_PASSWORD="augmodo12@"
 # Arg 1: Filter band ('2.4' or '5').
 # ==============================================================================
 list_wifi_networks() {
-    band=$1
+    band=
     
     # Set title
     output_title="[All Bands]"
@@ -60,12 +67,12 @@ list_wifi_networks() {
 # Finds PID of a running application.
 # ==============================================================================
 get_pid_by_name() {
-    [ -z "$1" ] && { echo "Error: Provide process name." >&2; return 1; }
+    [ -z "" ] && { echo "Error: Provide process name." >&2; return 1; }
 
-    process_pattern="$1"
+    process_pattern=""
     
-    # Use ps and awk to reliably find the PID ($1), excluding the awk command itself.
-    ps | awk -v pat="$process_pattern" '$0 ~ pat && !/awk|grep/ {print $1}'
+    # Use ps and awk to reliably find the PID (), excluding the awk command itself.
+    ps | awk -v pat="$process_pattern" '$0 ~ pat && !/awk|grep/ {print }'
 }
 
 # ==============================================================================
@@ -129,7 +136,28 @@ sleep 5
 
 # Get IP address via DHCP
 echo "Attempting to get IP address on $WIFI_INTERFACE..."
-udhcpc -i "$WIFI_INTERFACE" > /dev/null 2>&1
+
+UDHCPC_TIMEOUT=10 # Timeout for each udhcpc attempt (seconds)
+UDHCPC_RETRIES=3  # Number of times to retry udhcpc
+
+DHCP_SUCCESS=0
+for i in $(seq 1 $UDHCPC_RETRIES); do
+    echo "DHCP attempt $i of $UDHCPC_RETRIES..."
+    udhcpc -i "$WIFI_INTERFACE" -T "$UDHCPC_TIMEOUT" > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "udhcpc successful."
+        DHCP_SUCCESS=1
+        break
+    else
+        echo "udhcpc failed. Retrying in 2 seconds..."
+        sleep 2
+    fi
+done
+
+if [ "$DHCP_SUCCESS" -eq 0 ]; then
+    echo "Failed to obtain IP address after $UDHCPC_RETRIES attempts."
+    exit 1
+fi
 
 echo ""
 echo "--- Verification and Reporting ---"
@@ -141,7 +169,7 @@ echo ""
 
 # Check the connection status
 CONNECT_STATUS=$(check_if_connected)
-if [ $CONNECT_STATUS = "CONNECTED" ]; then
+if [ "$CONNECT_STATUS" = "CONNECTED" ]; then
     get_ip_address
 fi
 
