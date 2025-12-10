@@ -4,9 +4,13 @@ import openhtf as htf
 from openhtf.util.configuration import CONF
 from openhtf.plugs import user_input
 from openhtf.output.callbacks import json_factory
-from tofupilot.openhtf import TofuPilot
+# from tofupilot.openhtf import TofuPilot  # Commented out for now,
+# re-evaluate if needed for UI
 from phases.setup_phase import setup_adb_connection, bringup_wifi
 from plugs.DeviceAgentM import AgentM
+
+# Import the new UI application's main entry point
+from ui_app import ui_main
 
 CONF.declare('dut_port', default_value=50051,
              description='Port for Go Agent on DUT')
@@ -53,15 +57,29 @@ async def grpc_test():
     print(response)
 
 
-if __name__ == "__main__":
+def build_cli_htf_test_suite():
+    """Builds the OpenHTF test suite for CLI execution."""
+    # Load configuration
     with open("config/station.yaml", "r") as station_cfg:
         CONF.load_from_file(station_cfg)
 
-    asyncio.run(grpc_test())
-    test = htf.Test(setup_adb_connection, bringup_wifi,
+    # Return the OpenHTF test instance
+    return htf.Test(setup_adb_connection, bringup_wifi,
                     procedure_id="94b63dd8-ce0b-11f0-981b-0fecd78cd24f",
-                    part_number="scriptTest01"
-                    )
-    with TofuPilot(test):
-        test.execute(test_start=user_input.prompt_for_test_start(
-            "Please scan device id for test to start:"))
+                    part_number="scriptTest01")
+
+
+if __name__ == "__main__":
+    if "--cli" in sys.argv:
+        # Run the OpenHTF test in CLI mode
+        # Remove the argument to avoid issues with other parsers
+        sys.argv.remove("--cli")
+        test = build_cli_htf_test_suite()
+        # Ensure TofuPilot is imported if actually needed for CLI execution
+        from tofupilot.openhtf import TofuPilot
+        with TofuPilot(test):
+            test.execute(test_start=user_input.prompt_for_test_start(
+                "Please scan device id for test to start:"))
+    else:
+        # Run the PyQt6 UI application, passing the test factory
+        ui_main.main(test_factory=build_cli_htf_test_suite)
