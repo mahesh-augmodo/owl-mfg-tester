@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	pb "owl_test_agent/proto" // Added for protobuf messages
+	pb "owl_prober/proto" // Added for protobuf messages
 
 	"github.com/prometheus/procfs"
 )
@@ -51,7 +51,7 @@ func GetCPUTemperature(sysfsPath string) (float32, error) {
 	cpu_temp, err := strconv.Atoi(temp_str)
 	if err != nil {
 		slog.Error("unable to parse CPU temperature", "error", err) // Changed log message
-		return 0, err // Return error
+		return 0, err                                               // Return error
 	}
 	return (float32(cpu_temp) / 1e3), nil // Convert to Celsius from millicelsius
 }

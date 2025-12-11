@@ -7,8 +7,8 @@ import (
 
 	// Import your generated protobuf package
 	// Import your server package
-	pb "owl_test_agent/proto"
-	"owl_test_agent/server"
+	pb "owl_prober/proto"
+	"owl_prober/server"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

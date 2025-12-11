@@ -4,7 +4,7 @@ package dutTestAgent;
 
 import "google/protobuf/empty.proto";
 
-option go_package = "owl_test_agent/proto/";
+option go_package = "owl_prober/proto/";
 
 message GetAgentDetailsRequest {}
 

@@ -6,7 +6,7 @@ PROTO_FILE := proto/test_agent.proto # This is the full path from project root
 PYTHON_OUT_DIR := mfg_tester/src/
 
 # Go settings
-GO_MODULE_ROOT_DIR := owl_test_agent
+GO_MODULE_ROOT_DIR := owl_prober
 # The full path where the Go files will be generated, derived from go_package option.
 # This assumes the go_package option in the .proto file is relative to the GO_MODULE_ROOT_DIR.
 GO_GENERATED_DIR := $(GO_MODULE_ROOT_DIR)/proto/

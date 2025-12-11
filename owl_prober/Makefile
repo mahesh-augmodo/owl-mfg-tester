@@ -1,5 +1,5 @@
 # Configuration
-AGENT_NAME := owl_test_agent
+AGENT_NAME := owl_prober
 DEVICE_SERIAL ?= 4dbe780b65b17a32
 REMOTE_PATH := /tmp/$(AGENT_NAME)
 

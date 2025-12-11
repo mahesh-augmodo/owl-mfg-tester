@@ -23,8 +23,8 @@ import (
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 
-	pb "owl_test_agent/proto"
-	"owl_test_agent/resources/fonts"
+	pb "owl_prober/proto"
+	"owl_prober/resources/fonts"
 )
 
 // --- Initialization Singleton (Core Refactoring) ---
@@ -247,10 +247,10 @@ func SetScrollingText(initialText string) (chan<- string, error) {
 				scrollingText = newText
 				scrollResetDistance, preparedScrollingText = prepareScrollingText(scrollingText)
 				scrollOffset = fixed.I(dev.Bounds().Dx()) // Reset scroll position for new text
-				drawer.Dot.X = scrollOffset // Reset drawer position
+				drawer.Dot.X = scrollOffset               // Reset drawer position
 			case <-time.After(targetFrameTime):
 				renderStartTime := time.Now()
-				
+
 				scrollOffset -= fixed.I(5) // Move 5 units (1 full pixel)
 
 				if scrollOffset < -scrollResetDistance {

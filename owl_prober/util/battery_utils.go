@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync" // Added for mutex
 
-	pb "owl_test_agent/proto" // Imported proto
+	pb "owl_prober/proto" // Imported proto
 )
 
 var (

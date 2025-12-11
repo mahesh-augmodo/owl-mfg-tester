@@ -6,10 +6,10 @@ import (
 	"io"
 	"log/slog"
 	"os" // For parsing file permissions if needed
-	"owl_test_agent/util"
+	"owl_prober/util"
 	"sync"
 
-	pb "owl_test_agent/proto"
+	pb "owl_prober/proto"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

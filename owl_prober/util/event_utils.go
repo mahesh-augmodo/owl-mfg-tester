@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	pb "owl_test_agent/proto" // Added for protobuf messages
+	pb "owl_prober/proto" // Added for protobuf messages
 
 	"github.com/holoplot/go-evdev"
 )

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"sync" // Added for mutex
 
-	pb "owl_test_agent/proto" // Added for protobuf messages
+	pb "owl_prober/proto" // Added for protobuf messages
 )
 
 var (
