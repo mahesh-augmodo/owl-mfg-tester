@@ -5,7 +5,6 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 
 from ui_app.ui.window import HtfTestApp
-from ui_app.tests.product_a import get_test
 
 
 def main(test_factory=None):
@@ -21,8 +20,7 @@ def main(test_factory=None):
     font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
     app.setFont(font)
 
-    # Use the passed test_factory, or default to get_test if none is provided
-    test_func = test_factory if test_factory else get_test
+    test_func = test_factory
 
     window = HtfTestApp(
         window_title="OWL Manufacturing Tester",
@@ -32,7 +30,3 @@ def main(test_factory=None):
     window.show()
     # PyQt6 Change: use .exec() instead of .exec_()
     sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main(get_test)

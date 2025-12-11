@@ -1,6 +1,6 @@
 import logging
 from PyQt6.QtCore import QThread
-from ui_app.core.plug import GuiPlug
+from plugs.GuiPlug import GuiPlug
 import openhtf as htf
 
 
