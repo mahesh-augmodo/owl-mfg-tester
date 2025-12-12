@@ -24,3 +24,27 @@ gyro_events_3s:
 num_keys:
   equals: 2
   doc: "Number of keys detected in device"
+
+cpu_idle_percentage:
+  min: 90
+  unit: percent
+
+cpu_load_avg:
+  max: 20 #TODO: Change this, current bug causes spikes
+
+cpu_temp:
+  min: 20
+  max: 40
+  unit: "°C"
+
+total_memory_kb:
+  min: 1800000
+  unit: kilobyte
+
+left_cam_present:
+  equals: true
+  doc: "Verify if left cam present in v4l2"
+
+right_cam_present:
+  equala: true
+  doc: "Verify if right cam present in v4l2"

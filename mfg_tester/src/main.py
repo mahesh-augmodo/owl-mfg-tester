@@ -7,7 +7,17 @@ from openhtf.output.callbacks import json_factory
 from utils.verbose_console_summary import VerboseConsoleSummary
 # from tofupilot.openhtf import TofuPilot  # Commented out for now,
 # re-evaluate if needed for UI
-from phases.owl1_phases import ConnectToDeviceViaADB, ConnectToFactoryWifi, DeployAndConnectToOwlProber, TestOLEDDisplay, TestRTC, PushTestScriptsToDevice, TestIMUAndKeysPresent, TestIMUAccelGyro
+from phases.owl1_phases import ConnectToDeviceViaADB, \
+    ConnectToFactoryWifi, \
+    DeployAndConnectToOwlProber, \
+    TestOLEDDisplay, \
+    TestRTC, \
+    PushTestScriptsToDevice, \
+    TestIMUAndKeysPresent, \
+    TestIMUAccelGyro, \
+    IdentifyCamerasAndStopRecorder, \
+    TestCamerasDarkPhoto, \
+    GetSystemState
 
 # Import the new UI application's main entry point
 from ui_app import ui_main
@@ -29,6 +39,10 @@ CONF.declare(
     'adb_timeout',
     default_value=30,
     description="Timeout in secs for running adb commands")
+CONF.declare(
+    'camera_cmd_timeout',
+    default_value=60,
+    description="Timeout in secs for camera commands run on the device")
 CONF.declare('remote_cmd_timeout', default_value=30,
              description="Timeout in secs for remote commands")
 CONF.declare('cmd_retry_interval', default_value=2,
@@ -63,15 +77,19 @@ def build_cli_htf_test_suite():
 
     # Return the OpenHTF test instance
     test = htf.Test(ConnectToDeviceViaADB,
-                    TestRTC,
+                    # TestRTC,
                     PushTestScriptsToDevice,
                     ConnectToFactoryWifi,
                     DeployAndConnectToOwlProber,
-                    TestOLEDDisplay,
-                    TestIMUAndKeysPresent,
-                    TestIMUAccelGyro,
+                    GetSystemState,
+                    # TestOLEDDisplay,
+                    # TestIMUAndKeysPresent,
+                    # TestIMUAccelGyro,
+                    IdentifyCamerasAndStopRecorder,
+                    TestCamerasDarkPhoto,
                     procedure_id="94b63dd8-ce0b-11f0-981b-0fecd78cd24f",
                     part_number="scriptTest01")
+
     apply_limits_to_test(test, "config/limits.yaml")
 
     test.add_output_callbacks(

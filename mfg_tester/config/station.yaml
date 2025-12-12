@@ -19,10 +19,11 @@ cmd_retry_interval: 0.5
 adb_timeout: 60
 # Timeout in seconds for remote command execution.
 remote_cmd_timeout: 15
+camera_cmd_timeout: 60
 scripts_path: "device_scripts"
 
 # WiFi network to connect to.
 wifi_ssid: "AugmodoTestWiFi5G"
 wifi_password: "augmodo12@"
 # Networks we expect to find during network scan
-wifi_scan_networks: ["AugmodoTestWiFi5G","WLN-P"]
+wifi_scan_networks: [ "AugmodoTestWiFi5G", "WLN-P" ]

@@ -11,6 +11,7 @@ import time
 import re
 import pandas
 import io
+import tempfile
 
 
 def is_valid_ip(ip_string):
@@ -224,10 +225,11 @@ def DeployAndConnectToOwlProber(
             test.state['ip_address']}:{
             CONF.dut_port}...")
     gui.update_instruction("Connecting to device controller...")
-    # if not owl.connect(test.state["ip_address"], port=CONF.dut_port):
-    if not owl.connect(
-        "127.0.0.1",
-            port=CONF.dut_port):  # Only for remote testing
+    if not owl.connect(test.state["ip_address"], port=CONF.dut_port):
+        # test.state['ip_address'] = "192.168.8.207" #Debug
+        # if not owl.connect(
+        #     "127.0.0.1",
+        #         port=CONF.dut_port):  # #Debug
         test.logger.error(
             f"DeployAndConnectToOwlProber Failed: Unable to connect to owl_prober gRPC interface at {
                 test.state['ip_address']}:{
@@ -373,12 +375,94 @@ def TestBuzzer(test: htfTestApi, gui: GuiPlug, owl: OwlProberClient):
 
 
 @htf.plug(owl=OwlProberClient)
+@htf.plug(gui=GuiPlug)
+@htf.measures(
+    htf.Measurement("cpu_idle_percentage"),
+    htf.Measurement("cpu_load_avg"),
+    htf.Measurement("cpu_temp"),
+    htf.Measurement("total_memory_kb")
+)
+def GetSystemState(test: htfTestApi, owl: OwlProberClient, gui: GuiPlug):
+    try:
+        system_state = owl.GetSystemState()
+        test.measurements.cpu_temp = system_state.cpu_temperature
+        test.measurements.cpu_idle_percentage = system_state.cpu_idle_percent
+        test.measurements.cpu_load_avg = system_state.cpu_load_average
+        test.measurements.total_memory_kb = system_state.total_memory_kb
+    except BaseException:
+        return htf.PhaseResult.FAIL_AND_CONTINUE
+
+
+@htf.plug(owl=OwlProberClient)
 @htf.plug(dut=ADBDutControllerPlug)
 @htf.plug(gui=GuiPlug)
-def IdentifyAndInitializeCameras(
+@htf.measures(
+    htf.Measurement("left_cam_present"),
+    htf.Measurement("right_cam_present")
+)
+def IdentifyCamerasAndStopRecorder(
         test: htfTestApi,
         dut: ADBDutControllerPlug,
         gui: GuiPlug,
         owl: OwlProberClient):
-    left_cam_v4l2 = "/dev/v4l-subdev4"
-    right_cam_v4l2 = "/dev/v4l-subdev9"
+
+    cameras = dict()
+    cameras["Left"] = "/dev/v4l-subdev4"
+    cameras["Right"] = "/dev/v4l-subdev9"
+
+    for key in cameras.keys():
+        test.state[key] = cameras[key]
+
+    for camera in cameras.keys():
+        command = "v4l2-ctl"
+        args = f"-d {cameras[camera]} --all".split(" ")
+        result = owl.RunCommand(command,
+                                args,
+                                timeout_seconds=20,
+                                use_shell=True
+                                )
+        if 'User Controls' in result.stdout and 'Image Source Controls' in result.stdout:
+            if camera == "Left":
+                test.measurements.left_cam_present = True
+            if camera == "Right":
+                test.measurements.right_cam_present = True
+
+    owl.RunCommand("RkLunch-stop.sh", [], use_shell=True)
+
+
+@htf.plug(owl=OwlProberClient)
+@htf.plug(dut=ADBDutControllerPlug)
+@htf.plug(gui=GuiPlug)
+def TestCamerasDarkPhoto(
+        test: htfTestApi,
+        dut: ADBDutControllerPlug,
+        gui: GuiPlug,
+        owl: OwlProberClient):
+
+    cameras = dict()
+    cameras["Left"] = {"v4l-dev": test.state["Left"], "cam_idx": 1}
+    cameras["Right"] = {"v4l-dev": test.state["Right"], "cam_idx": 0}
+    for camera, details in cameras.items():
+        command = "rkadk_photo_test"
+        args = f"-I:{details["cam_idx"]} ".split(" ")
+        keys_to_send = "\n quit\n"
+        gui.prompt_user(
+            f"Cover {camera} camera for taking dark photo. Click ok when ready")
+        owl.RunCommand("rm", ["-rf", "/tmp/*.jpeg"], use_shell=True)
+        owl.RunCommand(command,
+                       args,
+                       timeout_seconds=CONF.camera_cmd_timeout,
+                       stdin_data=keys_to_send,
+                       use_shell=True
+                       )
+        dst_filename = f"DarkPhotoTest{camera}.jpeg"
+        photo_file = owl.DownloadFile(
+            "/tmp/PhotoTest_0.jpeg",
+            tempfile.gettempdir(),
+            dst_filename)
+        test.attach(
+            name=dst_filename,
+            binary_data=io.open(photo_file, mode='rb').read(),
+            mimetype="image/jpeg"
+        )
+        print(photo_file)
