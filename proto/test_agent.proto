@@ -165,6 +165,8 @@ message RunCommandRequest {
   repeated string args = 2;    // Arguments to pass to the command.
   int32 timeout_seconds = 3;   // Timeout for the command execution in seconds.
   string working_directory = 4; // (Optional) Working directory for the command.
+  string stdin_data = 5;       // (Optional) Data to be piped to the command's stdin.
+  bool use_shell = 6;          // (Optional) If true, execute the command through a shell (e.g., "bash -c").
 }
 
 message RunCommandResponse {

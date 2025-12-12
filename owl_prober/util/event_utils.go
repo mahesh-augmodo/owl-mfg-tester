@@ -66,7 +66,7 @@ func GetEventReportOverDuration(devicePath string, duration int32) (string, erro
 	writer := csv.NewWriter(&buf)
 
 	// Write CSV header
-	header := []string{"Timestamp_Sec", "Timestamp_USec", "EventType", "EventCode", "EventValue"}
+	header := []string{"Timestamp_FloatSec", "EventType", "EventCode", "EventValue"}
 	if err := writer.Write(header); err != nil {
 		return "", fmt.Errorf("error writing CSV header: %w", err)
 	}
@@ -105,8 +105,7 @@ func GetEventReportOverDuration(devicePath string, duration int32) (string, erro
 		}
 
 		record := []string{
-			fmt.Sprintf("%d", event.Time.Sec),
-			fmt.Sprintf("%d", event.Time.Usec),
+			fmt.Sprintf("%d.%06d", event.Time.Sec, event.Time.Usec),
 			evdev.EVToString[event.Type],
 			evdev.CodeName(event.Type, event.Code),
 			fmt.Sprintf("%d", event.Value),

@@ -1,0 +1,26 @@
+rtc_time_drift_sec:
+  min: 0
+  max: 2
+  unit: SECOND
+  doc: "RTC time drift over power cycle"
+
+ip_address:
+  doc: "Must be valid IPv4"
+
+accelerometer_present:
+  equals: true
+
+gyro_present:
+  equals: true
+
+accelerometer_events_3s:
+  min: 50
+  doc: "Number of accelerometer reports over time"
+
+gyro_events_3s:
+  min: 50
+  doc: "Number of gyroscope reports over time"
+
+num_keys:
+  equals: 2
+  doc: "Number of keys detected in device"

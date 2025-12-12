@@ -13,6 +13,7 @@ tofupilot = "*"
 tomlkit = "*"
 paramiko = "*"
 pyqt6 = "*"
+pandas = "*"
 
 [dev-packages]
 

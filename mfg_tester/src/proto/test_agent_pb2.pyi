@@ -198,16 +198,18 @@ class DownloadFileResponse(_message.Message):
     def __init__(self, chunk_data: _Optional[bytes] = ..., offset: _Optional[int] = ..., total_size: _Optional[int] = ...) -> None: ...
 
 class RunCommandRequest(_message.Message):
-    __slots__ = ("command", "args", "timeout_seconds", "working_directory")
+    __slots__ = ("command", "args", "timeout_seconds", "working_directory", "stdin_data")
     COMMAND_FIELD_NUMBER: _ClassVar[int]
     ARGS_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_SECONDS_FIELD_NUMBER: _ClassVar[int]
     WORKING_DIRECTORY_FIELD_NUMBER: _ClassVar[int]
+    STDIN_DATA_FIELD_NUMBER: _ClassVar[int]
     command: str
     args: _containers.RepeatedScalarFieldContainer[str]
     timeout_seconds: int
     working_directory: str
-    def __init__(self, command: _Optional[str] = ..., args: _Optional[_Iterable[str]] = ..., timeout_seconds: _Optional[int] = ..., working_directory: _Optional[str] = ...) -> None: ...
+    stdin_data: str
+    def __init__(self, command: _Optional[str] = ..., args: _Optional[_Iterable[str]] = ..., timeout_seconds: _Optional[int] = ..., working_directory: _Optional[str] = ..., stdin_data: _Optional[str] = ...) -> None: ...
 
 class RunCommandResponse(_message.Message):
     __slots__ = ("exit_code", "stdout", "stderr", "error_message")

@@ -190,6 +190,33 @@ func (s *Server) GetSystemState(ctx context.Context, in *pb.GetSystemStateReques
 	return resp, nil
 }
 
+// RunCommand executes a shell command on the device and returns its output and exit code.
+func (s *Server) RunCommand(ctx context.Context, in *pb.RunCommandRequest) (*pb.RunCommandResponse, error) {
+	slog.Debug(fmt.Sprintf("received RunCommand request: command='%s', args='%v', timeout=%d, working_dir='%s', stdin_data length=%d, use_shell=%t",
+		in.Command, in.Args, in.TimeoutSeconds, in.WorkingDirectory, len(in.StdinData), in.UseShell))
+
+	stdout, stderr, exitCode, errorMessage := util.RunShellCommandOnDeviceGRPC( // Updated return values
+		in.Command,
+		in.Args,
+		in.TimeoutSeconds,
+		in.StdinData,
+		in.WorkingDirectory,
+		in.UseShell,
+	)
+
+	resp := &pb.RunCommandResponse{
+		Stdout:   stdout,
+		Stderr:   stderr,
+		ExitCode: exitCode, // Set exit_code
+	}
+	if errorMessage != "" { // Check errorMessage directly
+		resp.ErrorMessage = errorMessage
+	}
+	slog.Debug(fmt.Sprintf("sent RunCommand response: exit_code=%d, stdout_len=%d, stderr_len=%d, error_message='%s'", // Updated log
+		exitCode, len(stdout), len(stderr), errorMessage))
+	return resp, nil
+}
+
 // UploadFile handles client-streaming file uploads.
 func (s *Server) UploadFile(stream pb.DutAgentService_UploadFileServer) error {
 	var file *os.File
@@ -274,7 +301,7 @@ func (s *Server) DownloadFile(req *pb.DownloadFileRequest, stream pb.DutAgentSer
 	}
 	totalSize := fileInfo.Size()
 
-	buffer := make([]byte, 4096) // Chunk size
+	buffer := make([]byte, 65536) // Chunk size
 	var sentSize int64
 
 	for {

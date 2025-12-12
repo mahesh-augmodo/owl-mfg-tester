@@ -29,7 +29,7 @@ list_wifi_networks() {
     # --- Ensure Fresh Data ---
     echo "--- Initiating Wi-Fi Scan (wait 2 seconds...) ---"
     wpa_cli scan > /dev/null 2>&1
-    sleep 3
+    sleep 7
     # -------------------------
 
     echo "--- Available SSIDs (Sorted by Signal) $output_title ---"
