@@ -1,7 +1,6 @@
 import logging
 from PyQt6.QtCore import QThread
 from plugs.GuiPlug import GuiPlug
-import openhtf as htf
 
 
 class OpenHtfRunner(QThread):
@@ -20,10 +19,12 @@ class OpenHtfRunner(QThread):
         self._setup_logging(htf_logger)
 
         try:
+
             # Build the specific test provided by main.py
             test = self.test_factory()
             result = test.execute(test_start=lambda: self.serial_number)
             self.signals.result.emit(result)
+
         except Exception as e:
             htf_logger.error(f"Test Execution Error: {e}")
             self.signals.result.emit(False)
@@ -45,5 +46,5 @@ class OpenHtfRunner(QThread):
             logging.Formatter(
                 '%(asctime)s - %(message)s',
                 datefmt='%H:%M:%S'))
+        handler.setLevel(logging.DEBUG)  # Explicitly set handler level
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO)

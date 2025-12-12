@@ -9,7 +9,7 @@ from PyQt6.QtGui import QFont
 
 from ui_app.core.signals import TestSignals
 from ui_app.core.runner import OpenHtfRunner
-from ui_app.core.plug import GuiPlug
+from plugs.GuiPlug import GuiPlug
 from ui_app.ui.styles import STYLESHEET
 
 
@@ -150,7 +150,7 @@ class HtfTestApp(QWidget):
         main_layout.addLayout(middle, stretch=3)
 
         # --- LOGS SECTION ---
-        main_layout.addWidget(QLabel("SYSTEM LOGS", objectName="LabelMeta"))
+        main_layout.addWidget(QLabel("TEST LOGS", objectName="LabelMeta"))
 
         grp_logs = QGroupBox()
         l_lay = QVBoxLayout()

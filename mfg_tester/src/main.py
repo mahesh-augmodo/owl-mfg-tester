@@ -1,13 +1,13 @@
-import asyncio
 import sys
 import openhtf as htf
 from openhtf.util.configuration import CONF
 from openhtf.plugs import user_input
+from utils.limits_loader import apply_limits_to_test
 from openhtf.output.callbacks import json_factory
+from utils.verbose_console_summary import VerboseConsoleSummary
 # from tofupilot.openhtf import TofuPilot  # Commented out for now,
 # re-evaluate if needed for UI
-from phases.setup_phase import setup_adb_connection, bringup_wifi
-from plugs.DeviceAgentM import AgentM
+from phases.owl1_phases import ConnectToDeviceViaADB, ConnectToFactoryWifi, DeployAndConnectToOwlProber, TestOLEDDisplay, TestRTC, PushTestScriptsToDevice, TestIMUAndKeysPresent, TestIMUAccelGyro
 
 # Import the new UI application's main entry point
 from ui_app import ui_main
@@ -49,12 +49,10 @@ CONF.declare('grpc_agent_port', default_value=50051,
              description='Port for the gRPC agent on the device.')
 CONF.declare('grpc_connection_timeout_seconds', default_value=10,
              description='Timeout for gRPC agent connection and initial RPCs.')
-
-
-async def grpc_test():
-    obj = AgentM("192.168.8.207", 50051)
-    response = await obj.GetDeviceAgentDetails()
-    print(response)
+CONF.declare('wifi_ssid',
+             description='Wifi factory network.')
+CONF.declare('wifi_password',
+             description='Wifi password for factory network.')
 
 
 def build_cli_htf_test_suite():
@@ -64,9 +62,26 @@ def build_cli_htf_test_suite():
         CONF.load_from_file(station_cfg)
 
     # Return the OpenHTF test instance
-    return htf.Test(setup_adb_connection, bringup_wifi,
+    test = htf.Test(ConnectToDeviceViaADB,
+                    TestRTC,
+                    PushTestScriptsToDevice,
+                    ConnectToFactoryWifi,
+                    DeployAndConnectToOwlProber,
+                    TestOLEDDisplay,
+                    TestIMUAndKeysPresent,
+                    TestIMUAccelGyro,
                     procedure_id="94b63dd8-ce0b-11f0-981b-0fecd78cd24f",
                     part_number="scriptTest01")
+    apply_limits_to_test(test, "config/limits.yaml")
+
+    test.add_output_callbacks(
+        json_factory.OutputToJSON(
+            "reports/{dut_id}_{outcome}_{start_time_millis}.json",
+            indent=4
+        ),
+        VerboseConsoleSummary()
+    )
+    return test
 
 
 if __name__ == "__main__":

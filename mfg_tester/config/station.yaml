@@ -7,17 +7,31 @@ dut_port: 50051
 # Whether to use a remote ADB host. If false, local ADB will be used.
 use_remote_adb: true
 # The hostname or IP address of the remote ADB host.
-adb_host: "mahesh-deskpi"
+adb_host: "mahesh-deskpi-1"
 # The port on the ADB host where the ADB server is running.
 adb_host_port: 5037
 
 # General command execution settings.
 # Maximum number of retries for command execution.
-max_cmd_retry: 3
+max_cmd_retry: 2
 cmd_retry_interval: 0.5
 # Timeout in seconds for adb command execution
-adb_timeout: 30
+adb_timeout: 60
 # Timeout in seconds for remote command execution.
-remote_cmd_timeout: 60
-scripts_path: "scripts"
+remote_cmd_timeout: 15
+scripts_path: "device_scripts"
+# WiFi network to connect to.
+wifi_ssid: "AugmodoTestWiFi5G"
+wifi_password: "augmodo12@"
+# Networks we expect to find during network scan
 wifi_scan_networks: ["AugmodoTestWiFi5G","WLN-P"]
+
+
+limits:
+  rtc_time_drift_sec:
+    min: 0
+    max: 2
+    unit: SECOND
+  
+  ip_address:
+    doc: "Must be valid IPv4"

@@ -1,4 +1,4 @@
-.PHONY: all python go clean
+.PHONY: all python go clean proto-python proto-go proto-clean proto owl_prober mfg_tester
 
 PROTO_FILE := proto/test_agent.proto # This is the full path from project root
 
@@ -11,7 +11,7 @@ GO_MODULE_ROOT_DIR := owl_prober
 # This assumes the go_package option in the .proto file is relative to the GO_MODULE_ROOT_DIR.
 GO_GENERATED_DIR := $(GO_MODULE_ROOT_DIR)/proto/
 
-all: python go
+all: mfg_tester owl_prober
 
 proto-python:
 	@echo "Compiling Python protobufs..."
@@ -43,3 +43,18 @@ proto-clean:
 	# If the directories are created solely for generated files, they can be removed too
 	# rm -rf $(GO_GENERATED_DIR)
 	@echo "Cleaned generated protobuf files."
+
+proto: 
+	proto-go 
+	proto-python
+
+owl_prober:
+	make -C owl_prober build
+
+mfg_tester: 
+	proto
+	owl_prober
+
+clean:
+	proto-clean
+	make -C owl_prober clean
