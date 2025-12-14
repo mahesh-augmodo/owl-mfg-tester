@@ -12,6 +12,7 @@ import re
 import pandas
 import io
 import tempfile
+from os import path
 
 
 def is_valid_ip(ip_string):
@@ -66,7 +67,7 @@ def PushTestScriptsToDevice(
         gui.update_instruction("Failed to reconnect to device. Check logs.")
         return htf.PhaseResult.STOP
 
-    push_scripts_result = dut.push_scripts_to_device()
+    push_scripts_result = dut.push_scripts_to_device(CONF.scripts_path)
     if not push_scripts_result.is_success:
         test.logger.error(
             f"PushTestScriptsToDevice Failed: Pushing scripts to device failed: {
@@ -87,8 +88,8 @@ def PushTestScriptsToDevice(
 def ConnectToFactoryWifi(test: htfTestApi, dut: ADBDutControllerPlug, gui):
     test.logger.info("Starting ConnectToFactoryWifi Phase...")
     gui.update_instruction("Connecting to factory Wi-Fi...")
-
-    wifi_result: CommandResult = dut.bringup_wifi_on_device()
+    wifi_script_path = path.join(CONF.scripts_path, CONF.wifi_connect_script)
+    wifi_result: CommandResult = dut.bringup_wifi_on_device(wifi_script_path)
     test.attach(
         'wifi_bringup_report.txt',
         wifi_result.full_output,
@@ -102,33 +103,44 @@ def ConnectToFactoryWifi(test: htfTestApi, dut: ADBDutControllerPlug, gui):
             "Failed to bring up Wi-Fi. Check device and network settings.")
         return htf.PhaseResult.STOP
 
+    # Let's find the IP Address
+    ip_address_search = re.search(
+        r'Device.IP.Address.=.([0-9.]+)*', wifi_result.full_output)
+    if ip_address_search:
+        test.measurements.ip_address = ip_address_search.group(1)
+        test.state["ip_address"] = ip_address_search.group(1)
+    else:
+        test.logger.error(
+            "ConnectToFactoryWifi Failed: Could not find IP address in WiFi bringup output.")
+        gui.update_instruction("Failed to obtain IP address from Wi-Fi.")
+        return htf.PhaseResult.STOP
+
+    test.logger.info("Wifi is up")
+    test.logger.info("ConnectToFactoryWifi Passed.")
+    gui.update_instruction("Connected to factory Wi-Fi successfully.")
+
+
+@htf.plug(dut=ADBDutControllerPlug)
+@htf.plug(gui=GuiPlug)
+@htf.PhaseOptions(repeat_limit=3)
+def ScanWifiNetworks(
+        test: htfTestApi,
+        dut: ADBDutControllerPlug,
+        gui: GuiPlug):
     TestWifiNetworks = CONF.wifi_scan_networks
+    wifi_scan_script_path = path.join(CONF.scripts_path, CONF.wifi_scan_script)
+    wifi_result = dut.scan_wifi_networks(wifi_scan_script_path)
     if wifi_result.is_success:
         for wifiname in TestWifiNetworks:
             if wifiname not in wifi_result.full_output:
                 test.logger.error(
-                    "ConnectToFactoryWifi Failed: Cannot find test WiFi networks in network scan:")
+                    "WiFi scan failed: Cannot find test WiFi networks in network scan:")
                 gui.update_instruction(
                     "Failed to find required Wi-Fi networks in scan.")
-                return htf.PhaseResult.STOP
+                return htf.PhaseResult.REPEAT
 
-        # Let's find the IP Address
-        ip_address_search = re.search(
-            r'Device.IP.Address.=.([0-9.]+)*', wifi_result.full_output)
-        if ip_address_search:
-            test.measurements.ip_address = ip_address_search.group(1)
-            test.state["ip_address"] = ip_address_search.group(1)
-        else:
-            test.logger.error(
-                "ConnectToFactoryWifi Failed: Could not find IP address in WiFi bringup output.")
-            gui.update_instruction("Failed to obtain IP address from Wi-Fi.")
-            return htf.PhaseResult.STOP
-
-    test.logger.info(
-        "Wifi is up, and test networks have been found in network scan")
-    test.logger.info("ConnectToFactoryWifi Passed.")
-    gui.update_instruction("Connected to factory Wi-Fi successfully.")
-    return htf.PhaseResult.CONTINUE
+    test.logger.info("ScanWifiNetworks Passed.")
+    gui.update_instruction("Found known networks in WiFi Scan.")
 
 
 @htf.plug(dut=ADBDutControllerPlug)
@@ -183,8 +195,8 @@ def DeployAndConnectToOwlProber(
         owl: OwlProberClient):
     test.logger.info("Starting DeployAndConnectToOwlProber Phase...")
     gui.update_instruction("Setting up device controller...")
-
-    result = dut.adb_push("dist/owl_prober", "/tmp/")  # Plugs persist
+    owl_prober_path = path.join(CONF.owl_prober_path, "owl_prober")
+    result = dut.adb_push(owl_prober_path, "/tmp/")  # Plugs persist
     if not result.is_success:
         test.logger.error(
             f"DeployAndConnectToOwlProber Failed: Unable to push owl_prober to DUT, error: {
@@ -382,7 +394,7 @@ def TestBuzzer(test: htfTestApi, gui: GuiPlug, owl: OwlProberClient):
     htf.Measurement("cpu_temp"),
     htf.Measurement("total_memory_kb")
 )
-def GetSystemState(test: htfTestApi, owl: OwlProberClient, gui: GuiPlug):
+def TestSystemState(test: htfTestApi, owl: OwlProberClient, gui: GuiPlug):
     try:
         system_state = owl.GetSystemState()
         test.measurements.cpu_temp = system_state.cpu_temperature
@@ -391,6 +403,37 @@ def GetSystemState(test: htfTestApi, owl: OwlProberClient, gui: GuiPlug):
         test.measurements.total_memory_kb = system_state.total_memory_kb
     except BaseException:
         return htf.PhaseResult.FAIL_AND_CONTINUE
+
+
+@htf.plug(owl=OwlProberClient)
+@htf.plug(gui=GuiPlug)
+def TestLEDs(test: htfTestApi, owl: OwlProberClient, gui: GuiPlug):
+    # Set to RED
+    owl.SetLEDColor("red_led", "green_led", "blue_led", 255, 0, 0, 0, 0, 0)
+    response = gui.set_user_response(
+        "What colour is the LED ?", [
+            "Red", "Green", "Blue"])
+    if response != "Red":
+        htf.PhaseResult.FAIL_AND_CONTINUE
+    # Set to Green
+    owl.SetLEDColor("red_led", "green_led", "blue_led", 0, 255, 0, 0, 0, 0)
+    response = gui.set_user_response(
+        "What colour is the LED ?", [
+            "Red", "Green", "Blue"])
+    if response != "Green":
+        htf.PhaseResult.FAIL_AND_CONTINUE
+    # Set to Blue
+    owl.SetLEDColor("red_led", "green_led", "blue_led", 0, 0, 255, 0, 0, 0)
+    response = gui.set_user_response(
+        "What colour is the LED ?", [
+            "Red", "Green", "Blue"])
+    if response != "Blue":
+        htf.PhaseResult.FAIL_AND_CONTINUE
+    # Set to Green and Blink
+    owl.SetLEDColor("red_led", "green_led", "blue_led", 0, 255, 0, 0, 1, 0)
+    response = gui.set_user_response("Is the LED Blinking?", ["Yes", "No"])
+    if response == "No":
+        htf.PhaseResult.FAIL_AND_CONTINUE
 
 
 @htf.plug(owl=OwlProberClient)

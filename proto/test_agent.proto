@@ -110,6 +110,20 @@ message DownloadFileResponse {
   int64 total_size = 3;
 }
 
+// New message for setting LED colors and blink rates
+message SetLEDColorRequest {
+  string red_led_name = 1;   // e.g., "red_led"
+  string green_led_name = 2; // e.g., "green_led"
+  string blue_led_name = 3;  // e.g., "blue_led"
+  int32 red_value = 4;   // Brightness value (e.g., 0-255)
+  int32 green_value = 5; // Brightness value (e.g., 0-255)
+  int32 blue_value = 6;  // Brightness value (e.g., 0-255)
+  int32 red_blink_rate_hz = 7;   // Blink rate in Hz (0 for solid, >0 for blinking)
+  int32 green_blink_rate_hz = 8; // Blink rate in Hz (0 for solid, >0 for blinking)
+  int32 blue_blink_rate_hz = 9;  // Blink rate in Hz (0 for solid, >0 for blinking)
+}
+
+
 service DutAgentService {
   // GetAgentDetails retrieves basic identification and status information about the agent.
   // This can be used as a simple health check and to verify agent connectivity.
@@ -158,6 +172,9 @@ service DutAgentService {
 
   // DownloadFile allows client to download a file from the agent.
   rpc DownloadFile (DownloadFileRequest) returns (stream DownloadFileResponse);
+
+  // SetLEDColor sets the brightness values and blink rates for RGB LEDs via sysfs.
+  rpc SetLEDColor (SetLEDColorRequest) returns (google.protobuf.Empty);
 }
 
 message RunCommandRequest {

@@ -181,6 +181,50 @@ class OwlProberClient(htf.BasePlug):
         self.logger.debug(f"SetBuzzer response: {response}")
         return response
 
+    def SetLEDColor(
+            self,
+            red_led_name: str,
+            green_led_name: str,
+            blue_led_name: str,
+            red_value: int,
+            green_value: int,
+            blue_value: int,
+            red_blink_rate_hz: int = 0,
+            green_blink_rate_hz: int = 0,
+            blue_blink_rate_hz: int = 0) -> None:
+        """
+        Sets the brightness values and blink rates for RGB LEDs on the DUT via the OwlProber agent.
+        Args:
+            red_led_name: Name of the red LED (e.g., "red_led").
+            green_led_name: Name of the green LED (e.g., "green_led").
+            blue_led_name: Name of the blue LED (e.g., "blue_led").
+            red_value: Brightness value for red LED (0-255).
+            green_value: Brightness value for green LED (0-255).
+            blue_value: Brightness value for blue LED (0-255).
+            red_blink_rate_hz: Blink rate for red LED in Hz (0 for solid, >0 for blinking).
+            green_blink_rate_hz: Blink rate for green LED in Hz (0 for solid, >0 for blinking).
+            blue_blink_rate_hz: Blink rate for blue LED in Hz (0 for solid, >0 for blinking).
+        """
+        set_led_color_request = test_agent_pb2.SetLEDColorRequest(
+            red_led_name=red_led_name,
+            green_led_name=green_led_name,
+            blue_led_name=blue_led_name,
+            red_value=red_value,
+            green_value=green_value,
+            blue_value=blue_value,
+            red_blink_rate_hz=red_blink_rate_hz,
+            green_blink_rate_hz=green_blink_rate_hz,
+            blue_blink_rate_hz=blue_blink_rate_hz
+        )
+        try:
+            response = self.stub.SetLEDColor(
+                set_led_color_request,
+                timeout=CONF.grpc_connection_timeout_seconds)
+            self.logger.debug(f"SetLEDColor response: {response}")
+        except Exception as e:
+            self.logger.error(f"SetLEDColor Failed: {e}")
+            raise  # Re-raise the exception after logging
+
     def RunCommand(
             self,
             command: str,

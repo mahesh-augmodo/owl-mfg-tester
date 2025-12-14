@@ -9,6 +9,7 @@ from utils.verbose_console_summary import VerboseConsoleSummary
 # re-evaluate if needed for UI
 from phases.owl1_phases import ConnectToDeviceViaADB, \
     ConnectToFactoryWifi, \
+    ScanWifiNetworks, \
     DeployAndConnectToOwlProber, \
     TestOLEDDisplay, \
     TestRTC, \
@@ -17,7 +18,8 @@ from phases.owl1_phases import ConnectToDeviceViaADB, \
     TestIMUAccelGyro, \
     IdentifyCamerasAndStopRecorder, \
     TestCamerasDarkPhoto, \
-    GetSystemState
+    TestSystemState, \
+    TestLEDs
 
 # Import the new UI application's main entry point
 from ui_app import ui_main
@@ -48,6 +50,8 @@ CONF.declare('remote_cmd_timeout', default_value=30,
 CONF.declare('cmd_retry_interval', default_value=2,
              description="Time is secs to wait before retrying")
 CONF.declare("scripts_path", description="Path to find device scripts")
+CONF.declare("wifi_connect_script", description="Name of wifi connect script")
+CONF.declare("wifi_scan_script", description="Name of wifi scan script")
 CONF.declare(
     "wifi_scan_networks",
     description="Wifi networks that should be present in wifi scan")
@@ -77,14 +81,16 @@ def build_cli_htf_test_suite():
 
     # Return the OpenHTF test instance
     test = htf.Test(ConnectToDeviceViaADB,
-                    # TestRTC,
+                    TestRTC,
                     PushTestScriptsToDevice,
                     ConnectToFactoryWifi,
+                    ScanWifiNetworks,
                     DeployAndConnectToOwlProber,
-                    GetSystemState,
-                    # TestOLEDDisplay,
-                    # TestIMUAndKeysPresent,
-                    # TestIMUAccelGyro,
+                    TestSystemState,
+                    TestIMUAndKeysPresent,
+                    TestIMUAccelGyro,
+                    TestLEDs,
+                    TestOLEDDisplay,
                     IdentifyCamerasAndStopRecorder,
                     TestCamerasDarkPhoto,
                     procedure_id="94b63dd8-ce0b-11f0-981b-0fecd78cd24f",

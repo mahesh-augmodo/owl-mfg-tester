@@ -190,6 +190,27 @@ func (s *Server) GetSystemState(ctx context.Context, in *pb.GetSystemStateReques
 	return resp, nil
 }
 
+// SetLEDColor sets the brightness values and blink rates for RGB LEDs via sysfs.
+func (s *Server) SetLEDColor(ctx context.Context, in *pb.SetLEDColorRequest) (*emptypb.Empty, error) {
+	slog.Debug(fmt.Sprintf("received SetLEDColor request: red_led='%s' val=%d blink=%d, green_led='%s' val=%d blink=%d, blue_led='%s' val=%d blink=%d",
+		in.RedLedName, in.RedValue, in.RedBlinkRateHz,
+		in.GreenLedName, in.GreenValue, in.GreenBlinkRateHz,
+		in.BlueLedName, in.BlueValue, in.BlueBlinkRateHz))
+
+	err := util.SetLEDColor(
+		in.RedLedName, in.GreenLedName, in.BlueLedName,
+		in.RedValue, in.GreenValue, in.BlueValue,
+		in.RedBlinkRateHz, in.GreenBlinkRateHz, in.BlueBlinkRateHz,
+	)
+	if err != nil {
+		slog.Error("failed to set LED color", "error", err)
+		return nil, err
+	}
+
+	slog.Info("LED color set successfully")
+	return &emptypb.Empty{}, nil
+}
+
 // RunCommand executes a shell command on the device and returns its output and exit code.
 func (s *Server) RunCommand(ctx context.Context, in *pb.RunCommandRequest) (*pb.RunCommandResponse, error) {
 	slog.Debug(fmt.Sprintf("received RunCommand request: command='%s', args='%v', timeout=%d, working_dir='%s', stdin_data length=%d, use_shell=%t",

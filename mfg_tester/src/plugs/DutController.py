@@ -247,14 +247,14 @@ class ADBDutControllerPlug(htf.BasePlug):
             stdout=res.stdout,
             stderr=res.stderr)
 
-    def push_scripts_to_device(self) -> CommandResult:
+    def push_scripts_to_device(self, scripts_path: str) -> CommandResult:
         if not self.device_id:
             return CommandResult(
                 is_success=False,
                 error_message="No Device ID")
 
         res = self.adb_push(
-            CONF.scripts_path,
+            scripts_path,
             "/tmp/",
             retries=CONF.max_cmd_retry)
         if res.is_success:
@@ -263,11 +263,11 @@ class ADBDutControllerPlug(htf.BasePlug):
             self.logger.debug(f"Push scripts failed: {res.stderr}")
         return res
 
-    def bringup_wifi_on_device(self) -> CommandResult:
+    def bringup_wifi_on_device(self, wifi_script_path: str) -> CommandResult:
         if not self.device_id:
             return CommandResult(is_success=False)
 
-        path = f"/tmp/{CONF.scripts_path}/setup_test_wifi.sh"
+        path = f"/tmp/{wifi_script_path}"
         self.run_adb_cmd(["shell", "chmod +x", path])
 
         res = self.run_adb_cmd(
@@ -276,6 +276,20 @@ class ADBDutControllerPlug(htf.BasePlug):
             self.logger.debug("Wifi script executed successfully")
         else:
             self.logger.debug(f"Wifi script failed: {res.stderr}")
+        return res
+
+    def scan_wifi_networks(self, wifi_scan_script_path: str) -> CommandResult:
+        if not self.device_id:
+            return CommandResult(is_success=False)
+
+        path = f"/tmp/{wifi_scan_script_path}"
+        self.run_adb_cmd(["shell", "chmod +x", path])
+
+        res = self.run_adb_cmd(["shell", path], timeout=120)
+        if res.is_success:
+            self.logger.debug("Wifi scan script executed successfully")
+        else:
+            self.logger.debug(f"Wifi scan script failed: {res.stderr}")
         return res
 
     def tearDown(self) -> None:

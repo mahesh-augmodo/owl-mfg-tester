@@ -103,7 +103,7 @@ func readSysfsValue(path string) (string, error) {
 
 // writeSysfsValue writes a string value to a sysfs file.
 func writeSysfsValue(path, value string) error {
-	err := os.WriteFile(path, []byte(value), os.FileMode(os.O_WRONLY))
+	err := os.WriteFile(path, []byte(value), 0644) // Changed FileMode to 0644 for write permissions
 	if err != nil {
 		return fmt.Errorf("failed to write to sysfs file %s: %w", path, err)
 	}
@@ -125,4 +125,68 @@ func RunShellCommandOnDeviceGRPC(command string, args []string, timeoutSeconds i
 	}
 	// Command executed successfully (exit code 0)
 	return out, errs, 0, ""
+}
+
+// SetLEDColor sets the brightness values and blink rates for RGB LEDs via sysfs.
+// It assumes LED sysfs directories are under /sys/class/leds/
+func SetLEDColor(redLedName, greenLedName, blueLedName string, redVal, greenVal, blueVal int32, redBlinkRate, greenBlinkRate, blueBlinkRate int32) error {
+	basePath := "/sys/class/leds/"
+
+	// Helper function to set LED brightness and trigger
+	setLED := func(ledName string, value int32, blinkRate int32) error {
+		if ledName == "" {
+			return nil // No path provided, skip this LED
+		}
+		sysfsPath := fmt.Sprintf("%s%s", basePath, ledName)
+
+		// Set trigger
+		triggerPath := fmt.Sprintf("%s/trigger", sysfsPath)
+		if blinkRate > 0 {
+			// Set trigger to timer and configure delays
+			if err := writeSysfsValue(triggerPath, "timer"); err != nil {
+				return fmt.Errorf("failed to set trigger for %s to timer: %w", ledName, err)
+			}
+			delayOnPath := fmt.Sprintf("%s/delay_on", sysfsPath)
+			delayOffPath := fmt.Sprintf("%s/delay_off", sysfsPath)
+
+			// Calculate delays in milliseconds
+			if blinkRate == 0 { 
+				blinkRate = 1 // Defensive: avoid division by zero if somehow passed 0 for blinking
+			}
+			periodMs := 1000 / blinkRate
+			delayOn := periodMs / 2
+			delayOff := periodMs / 2
+
+			if err := writeSysfsValue(delayOnPath, fmt.Sprintf("%d", delayOn)); err != nil {
+				return fmt.Errorf("failed to set delay_on for %s: %w", ledName, err)
+			}
+			if err := writeSysfsValue(delayOffPath, fmt.Sprintf("%d", delayOff)); err != nil {
+				return fmt.Errorf("failed to set delay_off for %s: %w", ledName, err)
+			}
+		} else {
+			// Set trigger to 'none' for solid color
+			if err := writeSysfsValue(triggerPath, "none"); err != nil {
+				slog.Warn(fmt.Sprintf("failed to set trigger for %s to none: %v. Continuing without trigger.", ledName, err))
+			}
+		}
+
+		// Set brightness value
+		brightnessPath := fmt.Sprintf("%s/brightness", sysfsPath)
+		if err := writeSysfsValue(brightnessPath, fmt.Sprintf("%d", value)); err != nil {
+			return fmt.Errorf("failed to set brightness for %s: %w", ledName, err)
+		}
+		return nil
+	}
+
+	if err := setLED(redLedName, redVal, redBlinkRate); err != nil {
+		return err
+	}
+	if err := setLED(greenLedName, greenVal, greenBlinkRate); err != nil {
+		return err
+	}
+	if err := setLED(blueLedName, blueVal, blueBlinkRate); err != nil {
+		return err
+	}
+
+	return nil
 }

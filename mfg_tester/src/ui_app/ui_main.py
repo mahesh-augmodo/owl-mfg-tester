@@ -1,7 +1,7 @@
 import sys
 # PyQt6 Import
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 
 from ui_app.ui.window import HtfTestApp
@@ -19,6 +19,7 @@ def main(test_factory=None):
     # PyQt6 Change: StyleStrategy enum is fully qualified
     font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
     app.setFont(font)
+    app.setWindowIcon(QIcon("resources/OwlCheckIcon.png"))
 
     test_func = test_factory
 

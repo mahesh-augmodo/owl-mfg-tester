@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QLabel, QTextEdit, QGroupBox, QFrame
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon
 
 from ui_app.core.signals import TestSignals
 from ui_app.core.runner import OpenHtfRunner
@@ -199,10 +199,12 @@ class HtfTestApp(QWidget):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
             color = "#6C757D"
-            if c.lower() in ['yes', 'pass', 'ok', '是']:
+            if c.lower() in ['yes', 'pass', 'ok', '是', 'green', '绿色的']:
                 color = "#28A745"
-            elif c.lower() in ['no', 'fail', '否']:
+            elif c.lower() in ['no', 'fail', '否', 'red', '红色的']:
                 color = "#DC3545"
+            elif c.lower() in ['blue', '蓝色的']:
+                color = "#237CD5"
 
             btn.setStyleSheet(
                 f"background-color: {color}; color: white; border-radius: 6px; font-weight: bold; font-size: 18px;")
