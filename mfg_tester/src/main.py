@@ -50,6 +50,8 @@ CONF.declare('remote_cmd_timeout', default_value=30,
 CONF.declare('cmd_retry_interval', default_value=2,
              description="Time is secs to wait before retrying")
 CONF.declare("scripts_path", description="Path to find device scripts")
+CONF.declare("dev_prober_path", default_value="/tmp/",
+             description="Path on device where files are copied to.")
 CONF.declare("wifi_connect_script", description="Name of wifi connect script")
 CONF.declare("wifi_scan_script", description="Name of wifi scan script")
 CONF.declare(
@@ -117,8 +119,7 @@ if __name__ == "__main__":
         # Ensure TofuPilot is imported if actually needed for CLI execution
         from tofupilot.openhtf import TofuPilot
         with TofuPilot(test):
-            test.execute(test_start=user_input.prompt_for_test_start(
-                "Please scan device id for test to start:"))
+            test.execute()
     else:
         # Run the PyQt6 UI application, passing the test factory
         ui_main.main(test_factory=build_cli_htf_test_suite)

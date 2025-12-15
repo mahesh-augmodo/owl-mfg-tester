@@ -1,0 +1,476 @@
+# Translations template for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-12-15 01:35+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: mfg_tester/src/phases/owl1_phases.py:38 mfg_tester/src/utils/i18n.py:81
+msgid "Connecting to device..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:46
+msgid "Failed to connect to device. Please check USB connection."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:50
+msgid "Device connected successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:61
+msgid "Pushing test scripts to device..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:70
+msgid "Failed to reconnect to device. Check logs."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:78
+msgid "Failed to push test scripts to device."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:82
+msgid "Test scripts pushed successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:93
+msgid "Connecting to factory Wi-Fi..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:106
+msgid "Failed to bring up Wi-Fi. Check device and network settings."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:118
+msgid "Failed to obtain IP address from Wi-Fi."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:123
+msgid "Connected to factory Wi-Fi successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:134
+msgid "Scanning for Wi-Fi networks..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:144
+msgid "Failed to find required Wi-Fi networks in scan."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:148
+msgid "Found known networks in WiFi Scan."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:158
+msgid "Starting RTC Test..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:161
+msgid "Setting device time..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:165
+msgid "Writing to hardware clock and rebooting device..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:171
+msgid "Polling for device recovery after reboot..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:181
+msgid "RTC Test Passed successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:186
+msgid "RTC Test Failed. Check logs for details."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:202
+msgid "Setting up device controller..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:209
+msgid "Failed to deploy device controller."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:214
+msgid "Stopping existing device controller (if any)."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:221
+msgid "Setting up device controller permissions..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:227
+msgid "Failed to set up device controller permissions."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:231
+msgid "Starting device controller..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:236
+msgid "Failed to start device controller."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:244
+msgid "Connecting to device controller..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:251
+msgid "Failed to establish device control communication."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:257
+msgid "Device controller ready."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:264
+msgid "Starting OLED Display Test..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:268
+msgid "Configuring OLED display..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:281
+msgid "Failed to configure OLED display."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:285
+msgid "Setting text on OLED display..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:291
+msgid "Failed to set text on OLED display."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:295
+msgid "Is there text on the OLED Screen ?"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:296
+#: mfg_tester/src/phases/owl1_phases.py:433
+#: mfg_tester/src/phases/owl1_phases.py:516
+msgid "Yes"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:296
+#: mfg_tester/src/phases/owl1_phases.py:297
+#: mfg_tester/src/phases/owl1_phases.py:433
+#: mfg_tester/src/phases/owl1_phases.py:435
+#: mfg_tester/src/phases/owl1_phases.py:516
+#: mfg_tester/src/phases/owl1_phases.py:517
+msgid "No"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:300
+msgid "Operator confirmed no text on OLED."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:304
+msgid "Clearing text from OLED display."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:308
+msgid "OLED Display Test Passed successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:323
+msgid "Detecting IMU and Key devices..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:347
+msgid "Accelerometer not detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:351
+msgid "Gyroscope not detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:355
+msgid "No key devices detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:359
+msgid "IMU and Key devices detected successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:371
+msgid "Starting Accelerometer & Gyro Test..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:378
+msgid "Accelerometer not found."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:382
+msgid "Gyroscope not found."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:397
+msgid "No accelerometer events detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:401
+msgid "No gyroscope events detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:405
+msgid "Accelerometer & Gyro Test Completed."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:409
+msgid "IMU devices not properly initialized. Check previous phases."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:413
+msgid "Accelerometer & Gyro Test Failed. Check logs for details."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:421
+msgid "Starting Buzzer Sound Test..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:428
+msgid "Buzzer setup failed. Check logs."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:432
+msgid "Can you hear the Buzzer beeping ?"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:437
+msgid "Buzzer not audible."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:441
+msgid "Buzzer Sound test passed successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:454
+msgid "Gathering system state information..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:462
+msgid "System state gathered successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:465
+msgid "Failed to gather system state. Check logs."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:473
+msgid "Starting LED Test..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:481
+msgid "Setting LED to Red."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:484
+#: mfg_tester/src/phases/owl1_phases.py:495
+#: mfg_tester/src/phases/owl1_phases.py:506
+msgid "What colour is the LED ?"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:485
+#: mfg_tester/src/phases/owl1_phases.py:486
+#: mfg_tester/src/phases/owl1_phases.py:496
+#: mfg_tester/src/phases/owl1_phases.py:507
+msgid "Red"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:485
+#: mfg_tester/src/phases/owl1_phases.py:496
+#: mfg_tester/src/phases/owl1_phases.py:497
+#: mfg_tester/src/phases/owl1_phases.py:507
+msgid "Green"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:485
+#: mfg_tester/src/phases/owl1_phases.py:496
+#: mfg_tester/src/phases/owl1_phases.py:507
+#: mfg_tester/src/phases/owl1_phases.py:508
+msgid "Blue"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:488
+msgid "Incorrect LED color (Expected Red)."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:492
+msgid "Setting LED to Green."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:499
+msgid "Incorrect LED color (Expected Green)."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:503
+msgid "Setting LED to Blue."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:510
+msgid "Incorrect LED color (Expected Blue)."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:514
+msgid "Setting LED to Green and Blinking."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:516
+msgid "Is the LED Blinking?"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:519
+msgid "LED is not blinking."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:523
+msgid "LED Test Passed successfully."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:527
+msgid "LED Test Failed. Check logs for details."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:545
+msgid "Identifying cameras and stopping recorder..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:558
+#, python-brace-format
+msgid "Checking camera: {}"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:580
+msgid "Left camera not detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:584
+msgid "Right camera not detected."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:587
+msgid "Stopping recorder if running..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:590
+msgid "Cameras identified and recorder stopped."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:603
+msgid "Testing cameras with dark photos..."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:610
+#, python-brace-format
+msgid "Preparing for {} camera dark photo."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:615
+#, python-brace-format
+msgid "Cover {} camera for taking dark photo. Click ok when ready"
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:621
+#, python-brace-format
+msgid "Taking dark photo with {} camera."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:631
+#, python-brace-format
+msgid "Failed to take dark photo with {} camera."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:636
+#, python-brace-format
+msgid "Downloading dark photo from {} camera."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:650
+#, python-brace-format
+msgid "Failed to download dark photo from {} camera."
+msgstr ""
+
+#: mfg_tester/src/phases/owl1_phases.py:654
+msgid "Camera dark photo test passed successfully."
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:65
+msgid "Scan Serial Number..."
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:70
+msgid "START TEST"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:80
+msgid "SERIAL NUMBER"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:88
+msgid "READY"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:108
+msgid "OPERATOR INSTRUCTIONS"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:117
+msgid "Waiting for Unit..."
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:129
+msgid "ACTIONS"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:134
+msgid "..."
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:155
+msgid "TEST LOGS"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:177
+msgid "Initializing..."
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:178
+msgid "RUNNING"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:234
+msgid "PASS"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:237
+msgid ""
+"TEST PASSED.\n"
+"Remove Unit."
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:239
+msgid "FAIL"
+msgstr ""
+
+#: mfg_tester/src/ui_app/ui/window.py:242
+msgid ""
+"TEST FAILED.\n"
+"Segregate Unit."
+msgstr ""
+

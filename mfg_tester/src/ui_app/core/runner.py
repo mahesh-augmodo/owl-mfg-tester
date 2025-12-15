@@ -4,9 +4,8 @@ from plugs.GuiPlug import GuiPlug
 
 
 class OpenHtfRunner(QThread):
-    def __init__(self, serial_number, test_factory, signals):
+    def __init__(self, test_factory, signals):
         super().__init__()
-        self.serial_number = serial_number
         self.test_factory = test_factory  # Function that returns the htf.Test object
         self.signals = signals
 
@@ -22,7 +21,7 @@ class OpenHtfRunner(QThread):
 
             # Build the specific test provided by main.py
             test = self.test_factory()
-            result = test.execute(test_start=lambda: self.serial_number)
+            result = test.execute()
             self.signals.result.emit(result)
 
         except Exception as e:

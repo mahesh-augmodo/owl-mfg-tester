@@ -1,7 +1,8 @@
 import sys
 import logging
+
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QTextEdit, QGroupBox, QFrame
 )
 from PyQt6.QtCore import Qt
@@ -11,11 +12,13 @@ from ui_app.core.signals import TestSignals
 from ui_app.core.runner import OpenHtfRunner
 from plugs.GuiPlug import GuiPlug
 from ui_app.ui.styles import STYLESHEET
+from utils.i18n import _
 
 
 class HtfTestApp(QWidget):
     def __init__(self, window_title, test_factory):
         super().__init__()
+        # window_title is passed, assume it's handled externally
         self.setWindowTitle(window_title)
         self.test_factory = test_factory
 
@@ -47,51 +50,27 @@ class HtfTestApp(QWidget):
         # --- HEADER ---
         header = QHBoxLayout()
 
-        # 1. SN Input Column
-        input_col = QWidget()
-        input_v = QVBoxLayout(input_col)
-        input_v.setContentsMargins(0, 0, 0, 0)
-
-        self.input_wrapper = QFrame()
-        self.input_wrapper.setObjectName("InputWrapper")
-        self.input_wrapper.setFixedSize(600, 50)
-
-        iw_layout = QHBoxLayout(self.input_wrapper)
-        iw_layout.setContentsMargins(0, 0, 0, 0)
-        iw_layout.setSpacing(0)
-
-        self.sn_input = QLineEdit()
-        self.sn_input.setPlaceholderText("Scan Serial Number...")
-        self.sn_input.setFixedHeight(50)
-        self.sn_input.setTextMargins(15, 0, 0, 0)
-        self.sn_input.returnPressed.connect(self.start_test)
-
-        self.btn_start = QPushButton("START TEST")
+        self.btn_start = QPushButton(_("START TEST"))
         self.btn_start.setObjectName("StartButton")
-        # PyQt6 Change: Full Enum Path for Cursor
         self.btn_start.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_start.setFixedSize(150, 50)
+        self.btn_start.setFixedSize(150, 50)  # Fixed size as before
         self.btn_start.clicked.connect(self.start_test)
 
-        iw_layout.addWidget(self.sn_input)
-        iw_layout.addWidget(self.btn_start)
-
-        input_v.addWidget(QLabel("SERIAL NUMBER", objectName="LabelMeta"))
-        input_v.addWidget(self.input_wrapper)
+        # 1. Start Button in Header
+        header.addWidget(self.btn_start)
+        header.addStretch(1)  # Add some stretch to push result to right
 
         # 2. Result Column
         res_col = QWidget()
         res_v = QVBoxLayout(res_col)
         res_v.setContentsMargins(0, 0, 0, 0)
 
-        self.lbl_result = QLabel("READY", objectName="ResultLabel")
-        # PyQt6 Change: Full Enum Path for Alignment
+        self.lbl_result = QLabel(_("READY"), objectName="ResultLabel")
         self.lbl_result.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         res_v.addWidget(self.lbl_result)
 
-        header.addWidget(input_col, stretch=6)
-        header.addWidget(res_col, stretch=4)
+        header.addWidget(res_col, stretch=4)  # Let result take remaining space
         main_layout.addLayout(header)
 
         # --- MIDDLE SECTION ---
@@ -104,15 +83,17 @@ class HtfTestApp(QWidget):
 
         inst_v.addWidget(
             QLabel(
-                "OPERATOR INSTRUCTIONS",
-                objectName="LabelMeta"))
+                _("OPERATOR INSTRUCTIONS"),
+                objectName="LabelMeta"
+            )
+        )
 
         grp_inst = QGroupBox()
         inst_lay = QVBoxLayout()
         inst_lay.setContentsMargins(1, 1, 1, 1)
         self.txt_inst = QTextEdit()
         self.txt_inst.setReadOnly(True)
-        self.txt_inst.setText("Waiting for Unit...")
+        self.txt_inst.setText(_("Waiting for Unit..."))
         inst_lay.addWidget(self.txt_inst)
         grp_inst.setLayout(inst_lay)
         inst_v.addWidget(grp_inst)
@@ -124,12 +105,12 @@ class HtfTestApp(QWidget):
         act_v = QVBoxLayout(self.action_container)
         act_v.setContentsMargins(0, 0, 0, 0)
 
-        act_v.addWidget(QLabel("ACTIONS", objectName="LabelMeta"))
+        act_v.addWidget(QLabel(_("ACTIONS"), objectName="LabelMeta"))
 
         self.grp_feedback = QGroupBox()
         self.grp_feedback.setObjectName("ActionGroup")
         fb_lay = QVBoxLayout()
-        self.lbl_question = QLabel("...", objectName="QuestionLabel")
+        self.lbl_question = QLabel(_("..."), objectName="QuestionLabel")
         # PyQt6 Change: Full Enum Path
         self.lbl_question.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_question.setWordWrap(True)
@@ -150,7 +131,7 @@ class HtfTestApp(QWidget):
         main_layout.addLayout(middle, stretch=3)
 
         # --- LOGS SECTION ---
-        main_layout.addWidget(QLabel("TEST LOGS", objectName="LabelMeta"))
+        main_layout.addWidget(QLabel(_("TEST LOGS"), objectName="LabelMeta"))
 
         grp_logs = QGroupBox()
         l_lay = QVBoxLayout()
@@ -165,22 +146,19 @@ class HtfTestApp(QWidget):
 
         main_layout.addWidget(grp_logs, stretch=2)
 
-    # --- Logic (Same as before) ---
+    # --- Logic ---
     def start_test(self):
-        sn = self.sn_input.text().strip()
-        if not sn:
-            return self.sn_input.setFocus()
-
         self.txt_logs.clear()
-        self.txt_inst.setText("Initializing...")
-        self.lbl_result.setText("RUNNING")
+        self.txt_inst.setText(_("Initializing..."))
+        self.lbl_result.setText(_("RUNNING"))
         self.lbl_result.setStyleSheet(
             "#ResultLabel { background-color: #007BFF; color: white; border: none; }")
         self.action_container.setVisible(False)
-        self.sn_input.setEnabled(False)
         self.btn_start.setEnabled(False)
 
-        self.runner = OpenHtfRunner(sn, self.test_factory, self.signals)
+        # Assuming SN is now managed by the test_factory or is not needed from
+        # UI
+        self.runner = OpenHtfRunner(self.test_factory, self.signals)
         self.runner.start()
 
     def show_prompt(self, question, choices):
@@ -199,12 +177,14 @@ class HtfTestApp(QWidget):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
             color = "#6C757D"
-            if c.lower() in ['yes', 'pass', 'ok', '是', 'green', '绿色的']:
+            if c.lower() in ['yes', 'pass', 'ok', '是', 'green',
+                             '绿色的']:  # Reverted to original logic
                 color = "#28A745"
+            # Reverted to original logic
             elif c.lower() in ['no', 'fail', '否', 'red', '红色的']:
                 color = "#DC3545"
-            elif c.lower() in ['blue', '蓝色的']:
-                color = "#237CD5"
+            elif c.lower() in ['blue', '蓝色的']:  # Reverted to original logic
+                color = "#1D81E4"
 
             btn.setStyleSheet(
                 f"background-color: {color}; color: white; border-radius: 6px; font-weight: bold; font-size: 18px;")
@@ -217,29 +197,26 @@ class HtfTestApp(QWidget):
 
     def show_instruction(self, text):
         formatted_text = text.replace("\n", "<br>")
-        html_content = f"""<div style="line-height: 150%;">{formatted_text}</div>"""
+        html_content = f"<div style=\"line-height: 150%;\">{formatted_text}</div>"
         self.txt_inst.setHtml(html_content)
 
     def append_log(self, msg, level):
         color = "#DC3545" if level >= logging.ERROR else "#212529"
         self.txt_logs.append(
-            f'<div style="line-height: 150%; color:{color}">{msg}</div>')
+            f'<div style=\"line-height: 150%; color:{color}\">{msg}</div>')
         self.txt_logs.verticalScrollBar().setValue(
             self.txt_logs.verticalScrollBar().maximum())
 
     def show_result(self, passed):
         if passed:
-            self.lbl_result.setText("PASS")
+            self.lbl_result.setText(_("PASS"))
             self.lbl_result.setStyleSheet(
                 "#ResultLabel { background-color: #28A745; color: white; border: none; }")
-            self.txt_inst.setText("TEST PASSED.\nRemove Unit.")
+            self.txt_inst.setText(_("TEST PASSED.\nRemove Unit."))
         else:
-            self.lbl_result.setText("FAIL")
+            self.lbl_result.setText(_("FAIL"))
             self.lbl_result.setStyleSheet(
                 "#ResultLabel { background-color: #DC3545; color: white; border: none; }")
-            self.txt_inst.setText("TEST FAILED.\nSegregate Unit.")
+            self.txt_inst.setText(_("TEST FAILED.\nSegregate Unit."))
 
-        self.sn_input.setEnabled(True)
-        self.sn_input.clear()
-        self.sn_input.setFocus()
-        self.btn_start.setEnabled(True)
+        self.btn_start.setEnabled(True)  # Only enable start button

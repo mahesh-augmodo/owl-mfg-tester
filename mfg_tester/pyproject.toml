@@ -1,4 +1,23 @@
 [project]
 name = "owl-tester"
 version = "0.1.0"
-dependencies = ['annotated-types==0.7.0', 'anyio==4.12.0', 'attrs==25.4.0', 'autopep8==2.3.2', 'backoff==2.2.1', 'bcrypt==5.0.0', 'cachetools==6.2.2', 'certifi==2025.11.12', 'cffi==2.0.0', 'charset-normalizer==3.4.4', 'colorama==0.4.6', 'contextlib2==21.6.0', 'cryptography==46.0.3', 'distro==1.9.0', 'google-auth==2.43.0', 'grpcio==1.76.0', 'grpcio-tools==1.76.0', 'h11==0.16.0', 'httpcore==1.0.9', 'httpx==0.28.1', 'idna==3.11', 'inflection==0.5.1', 'iniconfig==2.3.0', 'invoke==2.2.1', 'mutablerecords==0.4.1', 'openhtf==1.6.1', 'packaging==25.0', 'paho-mqtt==2.1.0', 'paramiko==4.0.0', 'pluggy==1.6.0', 'posthog==7.0.1', 'protobuf==6.33.1', 'pyasn1==0.6.1', 'pyasn1-modules==0.4.2', 'pycodestyle==2.14.0', 'pycparser==2.23', 'pydantic==2.12.5', 'pydantic-core==2.41.5', 'pygments==2.19.2', 'pynacl==1.6.1', 'pyopenssl==25.3.0', 'pytest==9.0.1', 'python-dateutil==2.9.0.post0', 'pyyaml==6.0.3', 'requests==2.32.5', 'rsa==4.9.1', 'setuptools==80.9.0', 'six==1.17.0', 'sockjs-tornado==1.0.7', 'tofupilot==1.12.1', 'tomlkit==0.13.3', 'tornado==6.4.2', 'typing-extensions==4.15.0', 'typing-inspection==0.4.2', 'urllib3==2.5.0']
+dependencies = ['annotated-types==0.7.0', 'anyio==4.12.0', 'attrs==25.4.0', 'autopep8==2.3.2', 'backoff==2.2.1', 'bcrypt==5.0.0', 'cachetools==6.2.2', 'certifi==2025.11.12', 'cffi==2.0.0', 'charset-normalizer==3.4.4', 'colorama==0.4.6', 'contextlib2==21.6.0', 'cryptography==46.0.3', 'distro==1.9.0', 'google-auth==2.43.0', 'grpcio==1.76.0', 'grpcio-tools==1.76.0', 'h11==0.16.0', 'httpcore==1.0.9', 'httpx==0.28.1', 'idna==3.11', 'inflection==0.5.1', 'iniconfig==2.3.0', 'invoke==2.2.1', 'mutablerecords==0.4.1', 'openhtf==1.6.1', 'packaging==25.0', 'paho-mqtt==2.1.0', 'paramiko==4.0.0', 'pluggy==1.6.0', 'posthog==7.0.1', 'protobuf==6.33.1', 'pyasn1==0.6.1', 'pyasn1-modules==0.4.2', 'pycodestyle==2.14.0', 'pycparser==2.23', 'pydantic==2.12.5', 'pydantic-core==2.41.5', 'pygments==2.19.2', 'pynacl==1.6.1', 'pyopenssl==25.3.0', 'pytest==9.0.1', 'python-dateutil==2.9.0.post0', 'pyyaml==6.0.3', 'requests==2.32.5', 'rsa==4.9.1', 'setuptools==80.9.0', 'six==1.17.0', 'sockjs-tornado==1.0.7', 'tofupilot==1.12.1', 'tomlkit==0.13.3', 'tornado==6.4.2', 'typing-extensions==4.15.0', 'typing-inspection==0.4.2', 'urllib3==2.5.0', 'pyqt6', 'pandas', 'babel']
+
+[tool.babel]
+# Global Babel settings
+domain = "messages"
+output_dir = "locale" # This should be the base directory for generated files relative to mfg_tester
+
+[tool.babel.extractors.python]
+# Settings for the Python extractor
+# The `ignore_patterns` here should be relative to the input-path (mfg_tester/src/)
+ignore_patterns = ["proto/*.py"]
+
+[tool.babel.messages]
+# Settings for messages.pot header
+project = "Owl Tester"
+version = "0.1.0"
+copyright_holder = "Augmodo LLC"
+msgid_bugs_address = "bugs@example.com"
+last_translator = "Gemini CLI Agent <gemini@google.com>"
+language_team = "English <en@example.com>"

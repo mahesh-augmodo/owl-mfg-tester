@@ -10,7 +10,7 @@ from openhtf.util.configuration import CONF
 from utils.command_result import CommandResult
 from utils.safe_decode import safe_decode
 
-WINDOWS_ADB_PATH = "mfg_tester/platform_utils/win/android_platform_tools/adb.exe"
+WINDOWS_ADB_PATH = "platform_utils/win/android_platform_tools/adb.exe"
 
 
 class ADBDutControllerPlug(htf.BasePlug):
@@ -19,6 +19,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         self.ssh_process: Optional[subprocess.Popen] = None
         self.use_remote_adb: bool = CONF.use_remote_adb
         self.device_id: Optional[str] = None
+        self.adb_bin = WINDOWS_ADB_PATH if sys.platform == 'win32' else 'adb'
 
         if self.use_remote_adb:
             self._setup_remote_adb()
@@ -92,8 +93,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         target = device_id if device_id else self.device_id
         timeout = timeout if timeout else CONF.adb_timeout
 
-        adb_bin = WINDOWS_ADB_PATH if sys.platform == 'win32' else 'adb'
-        cmd = [adb_bin]
+        cmd = [self.adb_bin]
 
         if target:
             cmd.extend(['-s', target])
@@ -221,7 +221,8 @@ class ADBDutControllerPlug(htf.BasePlug):
         """Main provisioning entry point."""
         # Check if already connected
         check = self.run_adb_cmd(["devices"])
-        if check.is_success and self.device_id and self.device_id in check.stdout:
+        device_id = self.get_connected_device_id(check.stdout)
+        if check.is_success and device_id:
             self.logger.debug(f"Device {self.device_id} already connected.")
             return CommandResult(is_success=True)
 
@@ -230,37 +231,46 @@ class ADBDutControllerPlug(htf.BasePlug):
 
         # Retry finding device
         res = self._exec_cmd(
-            [WINDOWS_ADB_PATH if sys.platform == 'win32' else 'adb', 'devices'],
+            [self.adb_bin, 'devices'],
             retries=3,
             context="Scan Devices"
         )
 
-        if res.is_success and self.device_id in res.stdout:
-            self.logger.debug(f"Connected to DUT: {self.device_id}")
-            return CommandResult(is_success=True)
+        device_id = self.get_connected_device_id(check.stdout)
+        if not device_id:
+            return CommandResult(
+                is_success=False,
+                stdout=res.stdout,
+                stderr=res.stderr)
 
-        err = f"DUT {self.device_id} not found."
-        self.logger.debug(err)
-        return CommandResult(
-            is_success=False,
-            error_message=err,
-            stdout=res.stdout,
-            stderr=res.stderr)
+    def get_connected_device_id(self, adb_device_list: str) -> str:
+        """Get's device id from adb devices -l
+        Assumes only one device is connected if not, errors out."""
+        device_list = [line.strip()
+                       for line in adb_device_list.splitlines() if line.strip()]
+        if len(device_list) > 1:  # First line is "list of devices attached" so skip that
+            dut_ids = [line.split(" ")[0] for line in device_list[1:]]
+            if len(dut_ids) == 1:
+                self.device_id = dut_ids[0]
+        return self.device_id if self.device_id else ""
 
-    def push_scripts_to_device(self, scripts_path: str) -> CommandResult:
+    def push_folder_to_device(
+            self,
+            folder_path: str,
+            device_folder_path: str) -> CommandResult:
         if not self.device_id:
             return CommandResult(
                 is_success=False,
                 error_message="No Device ID")
 
         res = self.adb_push(
-            scripts_path,
-            "/tmp/",
+            folder_path,
+            device_folder_path,
             retries=CONF.max_cmd_retry)
         if res.is_success:
-            self.logger.debug(f"Pushed scripts to /tmp/")
+            self.logger.debug(f"Pushed {folder_path} to {device_folder_path}")
         else:
-            self.logger.debug(f"Push scripts failed: {res.stderr}")
+            self.logger.debug(f"Push folder failed: {res.stderr}")
         return res
 
     def bringup_wifi_on_device(self, wifi_script_path: str) -> CommandResult:

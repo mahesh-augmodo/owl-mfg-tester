@@ -5,7 +5,7 @@ dut_port: 50051
 
 # ADB (Android Debug Bridge) related settings.
 # Whether to use a remote ADB host. If false, local ADB will be used.
-use_remote_adb: true
+use_remote_adb: false
 # The hostname or IP address of the remote ADB host.
 adb_host: "mahesh-deskpi-1"
 # The port on the ADB host where the ADB server is running.
@@ -22,6 +22,7 @@ remote_cmd_timeout: 15
 camera_cmd_timeout: 60
 owl_prober_path: "resources"
 scripts_path: "resources/device_scripts"
+dev_prober_path: "/oem/usr/owlprober"
 wifi_connect_script: "connect_factory_wifi.sh"
 wifi_scan_script: "wifi_scan.sh"
 # WiFi network to connect to.
