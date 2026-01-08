@@ -1,50 +1,195 @@
+# limits.yaml - Measurement Limits and Validators for OpenHTF
+#
+# This file defines the pass/fail criteria for each measurement recorded by the
+# test phases. The test software will apply these rules automatically.
+#
+# For each measurement, you can specify one or more of the following keys:
+#
+#   min: The minimum acceptable value (inclusive).
+#   max: The maximum acceptable value (inclusive).
+#   equals: The exact value the measurement must equal.
+#   unit: The unit of measurement (e.g., "SECOND", "percent", "Mbyte/s").
+#   doc: A string description of the measurement and its limit.
+#
+# -----------------------------------------------------------------------------
+# System & Timing
+# -----------------------------------------------------------------------------
 rtc_time_drift_sec:
+  doc: "RTC time drift over a power cycle. Should be very low."
   min: 0
   max: 2
   unit: SECOND
-  doc: "RTC time drift over power cycle"
 
 ip_address:
-  doc: "Must be valid IPv4"
+  doc: "Validates that the DUT obtained a valid IP address after connecting to Wi-Fi."
+  # No specific value check, but existence and format are validated by the phase.
 
+  # -----------------------------------------------------------------------------
+  # CPU & Memory
+  # -----------------------------------------------------------------------------
+cpu_idle_percentage:
+  doc: "Percentage of time the CPU is in an idle state. Should be high."
+  min: 90
+  unit: "percent"
+
+cpu_load_avg:
+  doc: "Average system load. Should not be excessively high."
+  # TODO: Re-evaluate this value; current hardware/software has known spikes.
+  max: 20
+
+cpu_temp:
+  doc: "CPU temperature reading. Should be within a normal operating range."
+  min: 20
+  max: 40
+  unit: "degree Celsius"
+
+total_memory_kb:
+  doc: "Total system memory detected. Should match hardware specs."
+  min: 1800000
+  unit: "kilobyte"
+
+# -----------------------------------------------------------------------------
+# IMU (Accelerometer & Gyroscope) & Keys
+# -----------------------------------------------------------------------------
 accelerometer_present:
+  doc: "Verifies that an accelerometer device is detected."
   equals: true
 
 gyro_present:
+  doc: "Verifies that a gyroscope device is detected."
   equals: true
 
 accelerometer_events_3s:
+  doc: "Number of accelerometer events/reports over a 3-second duration. Ensures the sensor is active."
   min: 50
-  doc: "Number of accelerometer reports over time"
 
 gyro_events_3s:
+  doc: "Number of gyroscope events/reports over a 3-second duration. Ensures the sensor is active."
   min: 50
-  doc: "Number of gyroscope reports over time"
 
 num_keys:
+  doc: "Number of key/button devices detected (e.g., Power, Function)."
   equals: 2
-  doc: "Number of keys detected in device"
 
-cpu_idle_percentage:
-  min: 90
-  unit: percent
-
-cpu_load_avg:
-  max: 20 #TODO: Change this, current bug causes spikes
-
-cpu_temp:
-  min: 20
-  max: 40
-  unit: "°C"
-
-total_memory_kb:
-  min: 1800000
-  unit: kilobyte
-
-left_cam_present:
+power_key_pressed:
+  doc: "Verifies that a press of the power key was detected."
   equals: true
-  doc: "Verify if left cam present in v4l2"
+
+function_key_pressed:
+  doc: "Verifies that a press of the function key was detected."
+  equals: true
+
+# -----------------------------------------------------------------------------
+# Camera Sensors
+# -----------------------------------------------------------------------------
+left_cam_present:
+  doc: "Verifies if the left camera is present and responsive via v4l2."
+  equals: true
 
 right_cam_present:
-  equala: true
-  doc: "Verify if right cam present in v4l2"
+  doc: "Verifies if the right camera is present and responsive via v4l2."
+  equals: true
+
+# --- Left Camera Metrics ---
+left_cam_fps:
+  doc: "Frames per second reported by the left camera."
+  equals: 30
+
+left_cam_exposure:
+  doc: "Exposure time for the left camera during a dark photo test."
+  max: 0.01
+  unit: "s"
+
+left_cam_aibnr:
+  doc: "Verifies that AIBNR (AI-based Noise Reduction) is disabled for the test."
+  equals: false
+
+left_cam_tnr:
+  doc: "Verifies that TNR (Temporal Noise Reduction) is disabled for the test."
+  equals: false
+
+left_cam_cnr:
+  doc: "Verifies that CNR (Chroma Noise Reduction) is enabled."
+  equals: true
+
+# --- Right Camera Metrics ---
+right_cam_fps:
+  doc: "Frames per second reported by the right camera."
+  equals: 30
+
+right_cam_exposure:
+  doc: "Exposure time for the right camera during a dark photo test."
+  max: 0.01
+  unit: "s"
+
+right_cam_aibnr:
+  doc: "Verifies that AIBNR (AI-based Noise Reduction) is disabled for the test."
+  equals: false
+
+right_cam_tnr:
+  doc: "Verifies that TNR (Temporal Noise Reduction) is disabled for the test."
+  equals: false
+
+right_cam_cnr:
+  doc: "Verifies that CNR (Chroma Noise Reduction) is enabled."
+  equals: true
+
+# -----------------------------------------------------------------------------
+# SD Card
+# -----------------------------------------------------------------------------
+sdcard_present:
+  doc: "Verifies that an SD card is mounted."
+  equals: true
+
+sdcard_total_size:
+  doc: "Total size of the SD card. Should be at least 100GB."
+  min: 100000000000
+  unit: "byte"
+
+sdcard_available_size:
+  doc: "Available space on the SD card. Should be at least 75GB."
+  min: 75000000000
+  unit: "byte"
+
+sdcard_read_speed:
+  doc: "Read speed from the SD card."
+  min: 150
+  unit: 'Mbyte/s'
+
+sdcard_write_speed:
+  doc: "Write speed to the SD card."
+  min: 10
+  unit: 'Mbyte/s'
+
+# -----------------------------------------------------------------------------
+# Battery
+# -----------------------------------------------------------------------------
+batt_present:
+  doc: "Verifies that the battery is detected."
+  equals: true
+
+batt_millivolts:
+  doc: "Battery voltage. Should be within the safe operating range for a Li-ion cell."
+  min: 3300
+  max: 4400
+  unit: "mV"
+
+batt_milliamps:
+  doc: "Battery current. Positive when charging, negative when discharging."
+  min: -3000
+  max: 5000
+  unit: "mA"
+
+batt_temperature:
+  doc: "Battery temperature. Should be within a safe operating range."
+  min: 20
+  max: 35
+  unit: "degree Celsius"
+
+batt_charging_verified:
+  doc: "Verifies that the battery enters a charging state when power is applied."
+  equals: true
+
+batt_discharging_verified:
+  doc: "Verifies that the battery enters a discharging state when power is removed."
+  equals: true

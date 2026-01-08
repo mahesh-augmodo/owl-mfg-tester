@@ -1,25 +1,26 @@
 import sys
 # PyQt6 Import
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtGui import QFont, QIcon, QFontDatabase
 from PyQt6.QtCore import Qt
 
 from ui_app.ui.window import HtfTestApp
+from utils.bundle_utils import get_resource_path
 
 
 def main(test_factory=None):
     # REMOVED: AA_EnableHighDpiScaling (Enabled by default in PyQt6)
 
     app = QApplication(sys.argv)
-
-    font = QFont("Helvetica", 10)
+    QFontDatabase.addApplicationFont(
+        get_resource_path("resources/fonts/NotoSansSC.ttf"))
+    font = QFont("NotoSansSC", 10)
     if not font.exactMatch():
         font = QFont("Arial", 10)
 
-    # PyQt6 Change: StyleStrategy enum is fully qualified
-    font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
+    font.setStyleStrategy(QFont.StyleStrategy.PreferQuality)
     app.setFont(font)
-    app.setWindowIcon(QIcon("resources/OwlCheckIcon.png"))
+    app.setWindowIcon(QIcon(get_resource_path("resources/OwlCheckIcon.png")))
 
     test_func = test_factory
 

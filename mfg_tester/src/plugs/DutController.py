@@ -2,15 +2,18 @@ import subprocess
 import time
 import sys
 import re
+import os
 from typing import Optional, List, Union, Callable
 from datetime import datetime, timedelta
 
 import openhtf as htf
 from openhtf.util.configuration import CONF
+from utils.bundle_utils import get_resource_path
 from utils.command_result import CommandResult
-from utils.safe_decode import safe_decode
+from utils.string_utils import safe_decode
 
-WINDOWS_ADB_PATH = "platform_utils/win/android_platform_tools/adb.exe"
+WINDOWS_ADB_PATH = get_resource_path(os.path.join(
+    "platform_utils", "win", "android_platform_tools", "adb.exe"))
 
 
 class ADBDutControllerPlug(htf.BasePlug):
@@ -30,7 +33,8 @@ class ADBDutControllerPlug(htf.BasePlug):
         timeout: int = 60,
         retries: int = 0,
         retry_interval: int = 2,
-        context: str = "Command"
+        context: str = "Command",
+        cwd: Optional[str] = None
     ) -> CommandResult:
         """
         Unified helper to execute subprocess commands with retries, timeout, and decoding.
@@ -45,12 +49,21 @@ class ADBDutControllerPlug(htf.BasePlug):
 
             self.logger.debug(f"Executing {context}: {' '.join(cmd)}")
 
+            if sys.platform == 'win32':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+            else:
+                startupinfo = None
+
             try:
                 proc = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=False,  # Capture raw bytes for safe_decode
-                    timeout=timeout
+                    timeout=timeout,
+                    startupinfo=startupinfo,
+                    cwd=cwd
                 )
 
                 stdout = safe_decode(proc.stdout) if proc.stdout else ""
@@ -100,7 +113,18 @@ class ADBDutControllerPlug(htf.BasePlug):
 
         cmd.extend(args)
 
-        return self._exec_cmd(cmd, timeout=timeout, context="ADB")
+        # If we are running a bundled exe on Windows, the CWD for adb.exe must
+        # be the dir where the exe is so it can find its DLLs.
+        adb_cwd = None
+        if sys.platform == 'win32' and getattr(sys, 'frozen', False):
+            adb_cwd = os.path.dirname(self.adb_bin)
+
+        return self._exec_cmd(
+            cmd,
+            timeout=timeout,
+            context="ADB",
+            retries=retries,
+            cwd=adb_cwd)
 
     def _remote_exec(self, remote_cmd: str) -> CommandResult:
         """Executes a command on the remote ADB host via SSH."""
@@ -249,7 +273,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         device_list = [line.strip()
                        for line in adb_device_list.splitlines() if line.strip()]
         if len(device_list) > 1:  # First line is "list of devices attached" so skip that
-            dut_ids = [line.split(" ")[0] for line in device_list[1:]]
+            dut_ids = [line.split()[0] for line in device_list[1:]]
             if len(dut_ids) == 1:
                 self.device_id = dut_ids[0]
         return self.device_id if self.device_id else ""
@@ -277,7 +301,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         if not self.device_id:
             return CommandResult(is_success=False)
 
-        path = f"/tmp/{wifi_script_path}"
+        path = f"{wifi_script_path}"
         self.run_adb_cmd(["shell", "chmod +x", path])
 
         res = self.run_adb_cmd(
@@ -292,7 +316,7 @@ class ADBDutControllerPlug(htf.BasePlug):
         if not self.device_id:
             return CommandResult(is_success=False)
 
-        path = f"/tmp/{wifi_scan_script_path}"
+        path = f"{wifi_scan_script_path}"
         self.run_adb_cmd(["shell", "chmod +x", path])
 
         res = self.run_adb_cmd(["shell", path], timeout=120)

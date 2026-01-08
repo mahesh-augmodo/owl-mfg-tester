@@ -43,6 +43,7 @@ message GetBatteryReadingsResponse {
   float celsius_temperature = 3;
   bool present = 4;
   string status = 5; // e.g., "Charging", "Discharging", "Full"
+  float capacity = 6;
 }
 
 message EventDevice {

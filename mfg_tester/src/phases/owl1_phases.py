@@ -15,8 +15,11 @@ from plugs.DutController import ADBDutControllerPlug
 from plugs.GuiPlug import GuiPlug
 from plugs.OwlProberClient import OwlProberClient
 from utils.command_result import CommandResult
+from utils.string_utils import convert_unit_suffix
 from utils.rtc_utils import get_rtc_drift, set_device_time
+from utils.camera_command_parsers import parse_dumpcam_hwi, parse_dumpcam_cnr_tnr
 from utils.i18n import _
+from utils.bundle_utils import get_resource_path
 
 
 def is_valid_ip(ip_string):
@@ -73,7 +76,7 @@ def PushTestScriptsToDevice(
         return htf.PhaseResult.STOP
 
     push_scripts_result = dut.push_folder_to_device(
-        CONF.scripts_path, CONF.dev_prober_path)
+        get_resource_path(CONF.scripts_path), CONF.dev_prober_path)
     if not push_scripts_result.is_success:
         test.logger.error(
             f"PushTestScriptsToDevice Failed: Pushing scripts to device failed: {
@@ -94,8 +97,7 @@ def PushTestScriptsToDevice(
 def ConnectToFactoryWifi(test: htfTestApi, dut: ADBDutControllerPlug, gui):
     test.logger.info("Starting ConnectToFactoryWifi Phase...")
     gui.update_instruction(_("Connecting to factory Wi-Fi..."))
-    wifi_script_path = os.path.join(
-        CONF.scripts_path, CONF.wifi_connect_script)
+    wifi_script_path = f"{CONF.dev_prober_path}/{CONF.wifi_connect_script}"
     wifi_result: CommandResult = dut.bringup_wifi_on_device(wifi_script_path)
     test.attach(
         'wifi_bringup_report.txt',
@@ -137,8 +139,7 @@ def ScanWifiNetworks(
     test.logger.info("Starting ScanWifiNetworks Phase...")
     gui.update_instruction(_("Scanning for Wi-Fi networks..."))
     TestWifiNetworks = CONF.wifi_scan_networks
-    wifi_scan_script_path = os.pathjoin(
-        CONF.scripts_path, CONF.wifi_scan_script)
+    wifi_scan_script_path = f"{CONF.dev_prober_path}/{CONF.wifi_scan_script}"
     wifi_result = dut.scan_wifi_networks(wifi_scan_script_path)
     if wifi_result.is_success:
         for wifiname in TestWifiNetworks:
@@ -196,6 +197,7 @@ def TestRTC(test: htfTestApi, dut: ADBDutControllerPlug, gui: GuiPlug):
 @htf.plug(dut=ADBDutControllerPlug)
 @htf.plug(gui=GuiPlug)
 @htf.plug(owl=OwlProberClient)
+@htf.PhaseOptions(repeat_limit=3)
 @htf.measures(
     htf.Measurement("mac_address")
 )
@@ -206,14 +208,17 @@ def DeployAndConnectToOwlProber(
         owl: OwlProberClient):
     test.logger.info("Starting DeployAndConnectToOwlProber Phase...")
     gui.update_instruction(_("Setting up device controller..."))
-    owl_prober_path = os.pathjoin(CONF.owl_prober_path, "owl_prober")
-    result = dut.adb_push(owl_prober_path, "/tmp/")  # Plugs persist
+    owl_prober_path = get_resource_path(
+        os.path.join(CONF.owl_prober_path, 'owl_prober'))
+    result = dut.adb_push(
+        owl_prober_path,
+        CONF.dev_prober_path)  # Plugs persist
     if not result.is_success:
         test.logger.error(
             f"DeployAndConnectToOwlProber Failed: Unable to push owl_prober to DUT, error: {
                 result.stderr}")
         gui.update_instruction(_("Failed to deploy device controller."))
-        return htf.PhaseResult.STOP
+        return htf.PhaseResult.REPEAT
 
     # Kill owl_prober if this is a running. Result does not matter
     test.logger.info("Killing existing owl_prober instances (if any).")
@@ -225,22 +230,24 @@ def DeployAndConnectToOwlProber(
     # Start owl_prober
     test.logger.info("Setting execute permissions for owl_prober...")
     gui.update_instruction(_("Setting up device controller permissions..."))
-    result = dut.run_adb_cmd(["shell", "chmod +x /tmp/owl_prober"])
+    result = dut.run_adb_cmd(
+        ["shell", f"chmod +x {CONF.dev_prober_path}/owl_prober"])
     if not result.is_success:
         test.logger.error(
             "DeployAndConnectToOwlProber Failed: Unable to make owl_prober executable.")
         gui.update_instruction(
             _("Failed to set up device controller permissions."))
-        return htf.PhaseResult.STOP
+        return htf.PhaseResult.REPEAT
 
     test.logger.info("Starting owl_prober on device...")
     gui.update_instruction(_("Starting device controller..."))
-    result = dut.run_adb_cmd(["shell", "nohup /tmp/owl_prober"])
+    result = dut.run_adb_cmd(
+        ["shell", f"nohup {CONF.dev_prober_path}/owl_prober"])
     if not result.is_success:
         test.logger.error(
             f"DeployAndConnectToOwlProber Failed: Unable to start owl_prober.")
         gui.update_instruction(_("Failed to start device controller."))
-        return htf.PhaseResult.STOP
+        return htf.PhaseResult.REPEAT
 
     # Try to conenct to gRPC.
     test.logger.info(
@@ -255,7 +262,7 @@ def DeployAndConnectToOwlProber(
                 CONF.dut_port}")
         gui.update_instruction(
             _("Failed to establish device control communication."))
-        return htf.PhaseResult.STOP
+        return htf.PhaseResult.REPEAT
 
     agent_details = owl.GetDeviceAgentDetails()
     test.measurements.mac_address = agent_details.mac_addr
@@ -344,6 +351,13 @@ def TestIMUAndKeysPresent(
         elif "gyro" in device.device_name:
             gyro_present_local = True
             test.state["gyro_device"] = device
+
+    for device in key_devices:
+        if "adc-keys" in device.device_name:
+            test.state["Function Key"] = device
+        elif "gpio_keys" in device.device_name:
+            test.state["Power Key"] = device
+
     test.measurements.accelerometer_present = accelerometer_present_local
     test.measurements.gyro_present = gyro_present_local
     test.measurements.num_keys = len(key_devices)
@@ -428,6 +442,58 @@ def TestIMUAccelGyro(test: htfTestApi, gui: GuiPlug, owl: OwlProberClient):
         gui.update_instruction(
             _("Accelerometer & Gyro Test Failed. Check logs for details."))
         return htf.PhaseResult.STOP
+
+
+@htf.plug(owl=OwlProberClient)
+@htf.plug(gui=GuiPlug)
+@htf.PhaseOptions(repeat_limit=2)
+@htf.measures(
+    htf.Measurement("function_key_pressed"),
+    htf.Measurement("power_key_pressed")
+)
+def TestKeys(test: htfTestApi, gui: GuiPlug, owl: OwlProberClient):
+    test.logger.info("Starting TestKeys Phase...")
+    gui.update_instruction(_("Starting Keys Test..."))
+    fn_key = test.state["Function Key"]
+    pwr_key = test.state["Power Key"]
+
+    gui.prompt_user(
+        _("Get ready to press function (Orange) key when instructed"))
+    gui.update_instruction(_("Press the function key (Orange key)"))
+    fn_key_report = pandas.DataFrame()
+    start_time = time.time()
+    timeout = start_time + 60
+    while (time.time() < timeout):
+        fn_key_events = owl.GetEventReportOverDuration(
+            fn_key.sysfs_path, duration_seconds=3)
+        fn_key_report_str = io.StringIO(fn_key_events.csv_report)
+        fn_key_report = pandas.concat(
+            [fn_key_report, pandas.read_csv(fn_key_report_str)])
+        if len(fn_key_report):
+            gui.update_instruction(_("Key press detected"))
+            test.measurements.function_key_pressed = True
+            break
+    if not test.measurements.function_key_pressed:
+        return htf.PhaseResult.REPEAT
+
+    gui.prompt_user(
+        _("Get ready to power function (Black) key when instructed"))
+    gui.update_instruction(_("Press the power key (Black key)"))
+    pwr_key_events_report = pandas.DataFrame()
+    start_time = time.time()
+    timeout = start_time + 60
+    while (time.time() < timeout):
+        pwr_key_events = owl.GetEventReportOverDuration(
+            pwr_key.sysfs_path, duration_seconds=3)
+        pwr_key_event_str = io.StringIO(pwr_key_events.csv_report)
+        pwr_key_events_report = pandas.concat(
+            [pwr_key_events_report, pandas.read_csv(pwr_key_event_str)])
+        if len(pwr_key_events_report):
+            gui.update_instruction(_("Key press detected"))
+            test.measurements.power_key_pressed = True
+            break
+    if not test.measurements.power_key_pressed:
+        return htf.PhaseResult.REPEAT
 
 
 @htf.plug(owl=OwlProberClient)
@@ -618,12 +684,35 @@ def IdentifyCamerasAndStopRecorder(
     owl.RunCommand("RkLunch-stop.sh", [], use_shell=True)
     test.logger.info("IdentifyCamerasAndStopRecorder Passed.")
     gui.update_instruction(_("Cameras identified and recorder stopped."))
+
+    # Update CamIni
+    gui.update_instruction(_("Updating cam configuration files..."))
+    resolved_cam_ini_path = get_resource_path(CONF.cam_ini_path)
+    for file in os.listdir(resolved_cam_ini_path):
+        source_file_path = os.path.join(resolved_cam_ini_path, file)
+        result = dut.adb_push(source_file_path, "/userdata/rkadk")
+        if not result.is_success:
+            return htf.PhaseResult.STOP
+    gui.update_instruction(_("Completed upload of cam configuration files..."))
+
     return htf.PhaseResult.CONTINUE
 
 
 @htf.plug(owl=OwlProberClient)
 @htf.plug(dut=ADBDutControllerPlug)
 @htf.plug(gui=GuiPlug)
+@htf.measures(
+    htf.Measurement("left_cam_fps"),
+    htf.Measurement("left_cam_exposure"),
+    htf.Measurement("left_cam_aibnr"),
+    htf.Measurement("left_cam_tnr"),
+    htf.Measurement("left_cam_cnr"),
+    htf.Measurement("right_cam_fps"),
+    htf.Measurement("right_cam_exposure"),
+    htf.Measurement("right_cam_aibnr"),
+    htf.Measurement("right_cam_tnr"),
+    htf.Measurement("right_cam_cnr")
+)
 def TestCamerasDarkPhoto(
         test: htfTestApi,
         dut: ADBDutControllerPlug,
@@ -640,7 +729,7 @@ def TestCamerasDarkPhoto(
         gui.update_instruction(
             _("Preparing for {} camera dark photo.").format(camera_name))
         command = "rkadk_photo_test"
-        args = f"-I:{details["cam_idx"]} ".split(" ")
+        args = [f"-I {details["cam_idx"]}", "-p /userdata/rkadk"]
         keys_to_send = "\n quit\n"
         gui.prompt_user(
             _("Cover {} camera for taking dark photo. Click ok when ready").format(camera_name))
@@ -690,6 +779,278 @@ def TestCamerasDarkPhoto(
                 _("Failed to download dark photo from {} camera.").format(camera_name))
             return htf.PhaseResult.FAIL_AND_CONTINUE
 
+    camera_params = get_camera_parameters(owl)
+    test.measurements.left_cam_fps = camera_params["Left Camera"]["fps"]
+    test.measurements.left_cam_exposure = camera_params["Left Camera"]["exposure_time"]
+    test.measurements.left_cam_aibnr = camera_params["Left Camera"]["aibnr"]
+    test.measurements.left_cam_tnr = camera_params["Left Camera"]["tnr"]
+    test.measurements.left_cam_cnr = camera_params["Left Camera"]["cnr"]
+
+    test.measurements.right_cam_fps = camera_params["Right Camera"]["fps"]
+    test.measurements.right_cam_exposure = camera_params["Right Camera"]["exposure_time"]
+    test.measurements.right_cam_aibnr = camera_params["Right Camera"]["aibnr"]
+    test.measurements.right_cam_tnr = camera_params["Right Camera"]["tnr"]
+    test.measurements.right_cam_cnr = camera_params["Right Camera"]["cnr"]
+
+    if camera_params is None:
+        return htf.PhaseResult.STOP
     test.logger.info("TestCamerasDarkPhoto Passed.")
     gui.update_instruction(_("Camera dark photo test passed successfully."))
-    return htf.PhaseResult.CONTINUE
+
+
+@htf.plug(owl=OwlProberClient)
+@htf.plug(dut=ADBDutControllerPlug)
+@htf.plug(gui=GuiPlug)
+@htf.measures(
+    htf.Measurement("sdcard_present"),
+    htf.Measurement("sdcard_filesystem"),
+    htf.Measurement("sdcard_total_size"),
+    htf.Measurement("sdcard_available_size"),
+    htf.Measurement("sdcard_read_speed"),
+    htf.Measurement("sdcard_write_speed")
+)
+def TestSDCard(
+        test: htfTestApi,
+        dut: ADBDutControllerPlug,
+        owl: OwlProberClient,
+        gui: GuiPlug):
+
+    # --- 1. DETECTION PHASE ---
+    gui.update_instruction(_("Verifying if SDCard is mounted..."))
+
+    # We grep for sdcard directly in the command to simplify parsing
+    check_sd_card = owl.RunCommand(
+        "df -hT | grep -i sdcard", [], use_shell=True)
+
+    if not check_sd_card.stdout.strip():
+        gui.update_instruction(_("SD Card not found!"))
+        test.measurements.sdcard_present = False
+        return htf.PhaseResult.FAIL_AND_CONTINUE
+
+    # Parsing the DF output
+    # Expected: Filesystem Type Size Used Avail Use% Mounted on
+    # Example: /dev/block/mmcblk1p1 vfat 29G 1.2G 28G 4% /storage/sdcard1
+    parts = re.split(r'\s+', check_sd_card.stdout.strip())
+
+    if len(parts) < 6:
+        test.logger.error(f"Failed to parse df output: {check_sd_card.stdout}")
+        test.measurements.sdcard_present = False
+        return htf.PhaseResult.FAIL_AND_CONTINUE
+
+    sdcard_info = {
+        "filesystem": parts[0],
+        "type": parts[1],
+        "size": parts[2],
+        "used": parts[3],
+        "available": parts[4],
+        "use_percent": parts[5],
+        # Grab the last part as mount point (handles cases with missing columns
+        # slightly better)
+        "mount_point": parts[-1]
+    }
+
+    test.measurements.sdcard_present = True
+    test.measurements.sdcard_filesystem = sdcard_info["type"]
+    test.measurements.sdcard_total_size = convert_unit_suffix(
+        sdcard_info["size"])
+    test.measurements.sdcard_available_size = convert_unit_suffix(
+        sdcard_info["available"])
+
+    mount_point = sdcard_info["mount_point"]
+    test.logger.info(f"SD Card detected at: {mount_point}")
+
+    # --- 2. CLEANUP PHASE ---
+    # Removes the 'video' folder as done in the original script
+    gui.update_instruction(_("Cleaning up old files..."))
+    owl.RunCommand(f"rm -rf {mount_point}/video", [], use_shell=True)
+
+    # --- 3. WRITE TEST ---
+    gui.update_instruction(_("Running Write Speed Test..."))
+
+    # Use 'dd' to write 64MB (16 blocks of 4MB)
+    # conv=fsync ensures data is physically written, not just cached
+    temp_file = f"{mount_point}/temp_test_file"
+    write_cmd = f"dd if=/dev/zero of={temp_file} bs=4M count=16 conv=fsync"
+
+    write_res = owl.RunCommand(write_cmd, [], use_shell=True)
+    if write_res.exit_code != 0:
+        test.logger.error(f"Write test failed: {write_res.stderr}")
+        return htf.PhaseResult.FAIL_AND_CONTINUE
+
+    # Parse Speed: "16+0 records in ... 15.4 MB/s"
+    # Regex handles both "MB/s" and "GB/s"
+    speed_match = re.search(r', ([\d.]+)\s*([KMG]B)/s', write_res.stderr)
+    # Note: 'dd' usually prints stats to stderr, not stdout
+
+    if speed_match:
+        speed_val = float(speed_match.group(1))
+        unit = speed_match.group(2)
+
+        # Normalize to MB/s if needed
+        if unit == "GB":
+            speed_val *= 1024
+        elif unit == "KB":
+            speed_val /= 1024
+
+        test.measurements.sdcard_write_speed = speed_val
+        test.logger.info(f"Write Speed: {speed_val} MB/s")
+    else:
+        test.logger.warning("Could not parse write speed from output.")
+
+    # --- 4. READ TEST ---
+    gui.update_instruction(_("Running Read Speed Test..."))
+
+    # Read back the temp file we just created
+    read_cmd = f"dd if={temp_file} of=/dev/null bs=1M count=16"
+    read_res = owl.RunCommand(read_cmd, [], use_shell=True)
+
+    if read_res.exit_code != 0:
+        test.logger.error("Read test failed.")
+    else:
+        # Parse Speed
+        speed_match = re.search(r', ([\d.]+)\s*([KMG]B)/s', read_res.stderr)
+        if speed_match:
+            speed_val = float(speed_match.group(1))
+            unit = speed_match.group(2)
+
+            if unit == "GB":
+                speed_val *= 1024
+            elif unit == "KB":
+                speed_val /= 1024
+
+            test.measurements.sdcard_read_speed = speed_val
+            test.logger.info(f"Read Speed: {speed_val} MB/s")
+
+    # --- 5. FINAL CLEANUP ---
+    gui.update_instruction(_("Cleaning up temp files..."))
+    owl.RunCommand(f"rm {temp_file}", [], use_shell=True)
+
+    gui.update_instruction(_("SD Card Test Complete"))
+
+
+def get_camera_parameters(owl: OwlProberClient):
+    dumpcam_content = {}
+    # To run dumpcam we first need rkaiq server running.
+    owl.RunCommand("RkLunch.sh", [""], use_shell=True)
+    # Get FPS, Exposure and Resolution
+    dumpcam_run = owl.RunCommand("dumpcam", ["hwi"], use_shell=True)
+    dumpcam_content = dumpcam_run.stdout
+    return_params = {}
+    if len(dumpcam_content):
+        cam_dumps = [dump for dump in dumpcam_content.split(
+            "╔") if "HWI -> sensor" in dump]
+        if len(cam_dumps) == 2:
+            return_params["Right Camera"] = parse_dumpcam_hwi(cam_dumps[0])
+            return_params["Left Camera"] = parse_dumpcam_hwi(cam_dumps[1])
+
+    # Get TNR
+    dumpcam_run = owl.RunCommand("dumpcam", ["tnr"], use_shell=True)
+    dumpcam_content = dumpcam_run.stdout
+    if len(dumpcam_content):
+        cam_dumps = [dump for dump in dumpcam_content.split(
+            "╔") if "Module: tnr" in dump]
+        return_params["Right Camera"] = {
+            "tnr": parse_dumpcam_cnr_tnr(
+                cam_dumps[0]),
+            **return_params["Right Camera"]}
+        return_params["Left Camera"] = {
+            "tnr": parse_dumpcam_cnr_tnr(
+                cam_dumps[1]),
+            **return_params["Left Camera"]}
+
+    # Get CNR
+    dumpcam_run = owl.RunCommand("dumpcam", ["cnr"], use_shell=True)
+    dumpcam_content = dumpcam_run.stdout
+    if len(dumpcam_content):
+        cam_dumps = [dump for dump in dumpcam_content.split(
+            "╔") if "Module: cnr" in dump]
+        return_params["Right Camera"] = {
+            "cnr": parse_dumpcam_cnr_tnr(
+                cam_dumps[0]),
+            **return_params["Right Camera"]}
+        return_params["Left Camera"] = {
+            "cnr": parse_dumpcam_cnr_tnr(
+                cam_dumps[1]),
+            **return_params["Left Camera"]}
+
+    # Get AIBNR. It is a different format
+    dumpcam_run = owl.RunCommand("dumpcam", ["aibnr"], use_shell=True)
+    dumpcam_content = dumpcam_run.stdout
+    string_to_search = "working mode="
+    if len(dumpcam_content):
+        cam_dumps = [dump for dump in dumpcam_content.splitlines()
+                     if string_to_search in dump]
+        if len(cam_dumps) == 2:
+            # Should be same for both cameras.
+            idx = cam_dumps[0].find(string_to_search) + len(string_to_search)
+            return_params["Right Camera"] = {
+                "aibnr": cam_dumps[0][idx:].split()[0] == '1', **return_params["Right Camera"]}
+            return_params["Left Camera"] = {
+                "aibnr": cam_dumps[1][idx:].split()[0] == '1', **return_params["Left Camera"]}
+
+    owl.RunCommand("RkLunch-stop.sh", [""], use_shell=True)
+    return return_params
+
+
+@htf.plug(owl=OwlProberClient)
+@htf.plug(dut=ADBDutControllerPlug)
+@htf.plug(gui=GuiPlug)
+@htf.measures(
+    htf.Measurement("batt_present"),
+    htf.Measurement("batt_millivolts"),
+    htf.Measurement("batt_milliamps"),
+    htf.Measurement("batt_temperature"),
+    htf.Measurement("batt_charging_verified"),
+    htf.Measurement("batt_discharging_verified")
+)
+def TestBatteryPhase(
+        test: htfTestApi,
+        dut: ADBDutControllerPlug,
+        owl: OwlProberClient,
+        gui: GuiPlug):
+    owl.ConfigureBattery("cw221X-bat",
+                         voltage_node="voltage_now",
+                         current_node="current_now",
+                         temp_node="hwmon2/temp1_input")
+
+    gui.update_instruction(_("Getting battery reading"))
+    batt_details = owl.GetBatteryReadings()
+    test.measurements.batt_present = batt_details.present
+    test.measurements.batt_temperature = batt_details.celsius_temperature / 100
+    test.measurements.batt_millivolts = batt_details.millivolts
+    test.measurements.batt_milliamps = batt_details.milliamps
+
+    test.state["batt_state"] = batt_details.status
+    if batt_details.status == "Charging":
+        test.measurements.batt_charging_verified = True
+    else:
+        return htf.PhaseResult.STOP
+    gui.update_instruction(_("Verified battery is charging"))
+
+    gui.prompt_user(_("Disconnect pogo connector to device"))
+    batt_details = owl.GetBatteryReadings()
+    if batt_details.status == "Discharging":
+        test.measurements.batt_discharging_verified = True
+
+    gui.prompt_user(_("Reconnect pogo connector to device"))
+
+    # Poll for return
+    gui.update_instruction(_("Polling for device recovery after reboot..."))
+    start_time = time.time()
+    deadline = start_time + 60
+    # Give the device some time to come up and stabilise.
+
+    while time.time() < deadline:
+        # 1. Fast Connectivity Check
+        res = dut.run_adb_cmd(['shell', 'echo 1'], timeout=5)
+        if res.is_success:
+            break
+        time.sleep(1)
+
+    result = dut.run_adb_cmd(
+        ["shell", f"chmod +x {CONF.dev_prober_path}/owl_prober"])
+    if not result.is_success:
+        test.logger.error(
+            f"TestBattery Failed: Unable to restart owl_prober.")
+        gui.update_instruction(_("Failed to restart device controller."))
+        return htf.PhaseResult.STOP

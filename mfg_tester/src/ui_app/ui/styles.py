@@ -3,7 +3,7 @@ STYLESHEET = """
     QWidget {
         background-color: #F4F6F9;
         color: #333;
-        font-family: "Helvetica", "Arial", sans-serif;
+        font-family: "NotoSansSC", "Helvetica", "Arial", sans-serif;
     }
 
     /* THE MASTER LABEL STYLE */
@@ -58,7 +58,7 @@ STYLESHEET = """
     /* Instructions */
     QTextEdit { border: none; }
     QTextEdit[readOnly="true"] {
-        font-size: 22px; color: #212529; padding: 20px; line-height: 140%;
+        font-size: 36px; color: #212529; padding: 20px; line-height: 140%;
     }
 
     /* Action Area */
@@ -66,12 +66,12 @@ STYLESHEET = """
         border: 1px solid #FFC107; /* REDUCED: 2px -> 1px */
         background-color: #FFF9DB;
     }
-    #QuestionLabel { font-size: 20px; font-weight: bold; color: #D35400; margin-bottom: 15px; }
+    #QuestionLabel { font-size: 36px; font-weight: bold; color: #D35400; margin-bottom: 15px; }
 
     /* Logs */
     #LogText {
         font-family: "Menlo", "Consolas", "Courier New", monospace;
-        font-size: 13px; color: #343A40;
+        font-size: 14px; color: #343A40;
         background-color: #F8F9FA; border: none; padding: 10px;
     }
 """

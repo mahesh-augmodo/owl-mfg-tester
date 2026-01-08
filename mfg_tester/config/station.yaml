@@ -1,32 +1,114 @@
-# Configuration for the DUT station.
+# station.yaml - Configuration for the OWL Manufacturing Tester
+# This file contains configuration settings for the test station.
 
-# Device Under Test (DUT) specific settings.
-dut_port: 50051
+# -----------------------------------------------------------------------------
+# ADB (Android Debug Bridge) Settings
+# -----------------------------------------------------------------------------
+# These settings control how the tester connects to the Device Under Test (DUT)
+# via ADB. It can connect to a local ADB server or a remote one via SSH.
 
-# ADB (Android Debug Bridge) related settings.
-# Whether to use a remote ADB host. If false, local ADB will be used.
+# use_remote_adb: Set to `true` to connect to an ADB server running on a remote
+# host (e.g., a Linux machine). Set to `false` for a local ADB connection.
 use_remote_adb: false
-# The hostname or IP address of the remote ADB host.
+
+# adb_host: The hostname or IP address of the remote ADB host.
+# This is only used if `use_remote_adb` is true.
 adb_host: "mahesh-deskpi-1"
-# The port on the ADB host where the ADB server is running.
+
+# adb_host_port: The port of the ADB server on the remote host.
+# Default is 5037. This is only used if `use_remote_adb` is true.
 adb_host_port: 5037
 
-# General command execution settings.
-# Maximum number of retries for command execution.
-max_cmd_retry: 2
-cmd_retry_interval: 0.5
-# Timeout in seconds for adb command execution
-adb_timeout: 60
-# Timeout in seconds for remote command execution.
-remote_cmd_timeout: 15
-camera_cmd_timeout: 60
-owl_prober_path: "resources"
+# -----------------------------------------------------------------------------
+# SSH (Secure Shell) Settings
+# -----------------------------------------------------------------------------
+# These settings are for connecting to the remote ADB host via SSH.
+# They are only used if `use_remote_adb` is true.
+
+# ssh_user: The username for the SSH connection to the remote ADB host.
+ssh_user: "root"
+
+# ssh_port: The port for the SSH connection.
+ssh_port: 22
+
+# ssh_private_key_path: (Optional) The local path to the SSH private key file.
+# Example on Windows: "C:/Users/YourUser/.ssh/id_rsa"
+ssh_private_key_path: null
+
+# -----------------------------------------------------------------------------
+# Wi-Fi Settings
+# -----------------------------------------------------------------------------
+# Configuration for connecting the DUT to the factory Wi-Fi network.
+
+# wifi_ssid: The name (SSID) of the factory Wi-Fi network.
+wifi_ssid: "KuruIRL"
+
+# wifi_password: The password for the factory Wi-Fi network.
+wifi_password: "Rockstar1!"
+
+# wifi_scan_networks: A list of Wi-Fi SSIDs that are expected to be visible
+# when the DUT performs a network scan. This is used to verify the Wi-Fi hardware.
+wifi_scan_networks:
+  - "VM1037869"
+  - "KuruIRL"
+
+# -----------------------------------------------------------------------------
+# gRPC Agent Settings
+# -----------------------------------------------------------------------------
+# Settings for the OwlProber gRPC agent running on the DUT.
+
+# dut_port: The TCP port on which the OwlProber gRPC agent listens on the DUT.
+dut_port: 50051
+
+# grpc_connection_timeout_seconds: The time in seconds to wait for a successful
+# connection to the gRPC agent.
+grpc_connection_timeout_seconds: 10
+
+# -----------------------------------------------------------------------------
+# File & Path Settings
+# -----------------------------------------------------------------------------
+# These paths define where the tester finds resource files and where it saves reports.
+
+# reports_dir: The directory where test reports (JSON files) will be saved.
+# When running as a bundled executable, this is created inside %APPDATA%/OwlMfgTester/.
+reports_dir: "reports"
+
+# scripts_path: The location of the shell scripts that are pushed to the DUT.
 scripts_path: "resources/device_scripts"
+
+# cam_ini_path: The location of the camera configuration (.ini) files.
+cam_ini_path: "resources/cam_ini"
+
+# owl_prober_path: The directory containing the 'owl_prober' agent binary.
+owl_prober_path: "resources"
+
+# dev_prober_path: The destination directory on the DUT where files are pushed.
 dev_prober_path: "/oem/usr/owlprober"
+
+# wifi_connect_script: The filename of the script used to connect to Wi-Fi.
+# Must exist within the `scripts_path` directory.
 wifi_connect_script: "connect_factory_wifi.sh"
+
+# wifi_scan_script: The filename of the script used to scan for Wi-Fi networks.
+# Must exist within the `scripts_path` directory.
 wifi_scan_script: "wifi_scan.sh"
-# WiFi network to connect to.
-wifi_ssid: "AugmodoTestWiFi5G"
-wifi_password: "augmodo12@"
-# Networks we expect to find during network scan
-wifi_scan_networks: [ "AugmodoTestWiFi5G", "WLN-P" ]
+
+# -----------------------------------------------------------------------------
+# Command Execution & Timeout Settings
+# -----------------------------------------------------------------------------
+# Fine-tuning for command retries and timeouts.
+
+# max_cmd_retry: The default number of times to retry a failed command.
+max_cmd_retry: 2
+
+# cmd_retry_interval: The number of seconds to wait between command retries.
+cmd_retry_interval: 0.5
+
+# adb_timeout: The default timeout in seconds for ADB commands.
+adb_timeout: 60
+
+# camera_cmd_timeout: A specific, longer timeout for camera-related commands.
+camera_cmd_timeout: 60
+
+# remote_cmd_timeout: The timeout for commands executed on the remote SSH host.
+remote_cmd_timeout: 15

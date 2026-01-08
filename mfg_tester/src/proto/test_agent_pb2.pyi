@@ -197,6 +197,28 @@ class DownloadFileResponse(_message.Message):
     total_size: int
     def __init__(self, chunk_data: _Optional[bytes] = ..., offset: _Optional[int] = ..., total_size: _Optional[int] = ...) -> None: ...
 
+class SetLEDColorRequest(_message.Message):
+    __slots__ = ("red_led_name", "green_led_name", "blue_led_name", "red_value", "green_value", "blue_value", "red_blink_rate_hz", "green_blink_rate_hz", "blue_blink_rate_hz")
+    RED_LED_NAME_FIELD_NUMBER: _ClassVar[int]
+    GREEN_LED_NAME_FIELD_NUMBER: _ClassVar[int]
+    BLUE_LED_NAME_FIELD_NUMBER: _ClassVar[int]
+    RED_VALUE_FIELD_NUMBER: _ClassVar[int]
+    GREEN_VALUE_FIELD_NUMBER: _ClassVar[int]
+    BLUE_VALUE_FIELD_NUMBER: _ClassVar[int]
+    RED_BLINK_RATE_HZ_FIELD_NUMBER: _ClassVar[int]
+    GREEN_BLINK_RATE_HZ_FIELD_NUMBER: _ClassVar[int]
+    BLUE_BLINK_RATE_HZ_FIELD_NUMBER: _ClassVar[int]
+    red_led_name: str
+    green_led_name: str
+    blue_led_name: str
+    red_value: int
+    green_value: int
+    blue_value: int
+    red_blink_rate_hz: int
+    green_blink_rate_hz: int
+    blue_blink_rate_hz: int
+    def __init__(self, red_led_name: _Optional[str] = ..., green_led_name: _Optional[str] = ..., blue_led_name: _Optional[str] = ..., red_value: _Optional[int] = ..., green_value: _Optional[int] = ..., blue_value: _Optional[int] = ..., red_blink_rate_hz: _Optional[int] = ..., green_blink_rate_hz: _Optional[int] = ..., blue_blink_rate_hz: _Optional[int] = ...) -> None: ...
+
 class RunCommandRequest(_message.Message):
     __slots__ = ("command", "args", "timeout_seconds", "working_directory", "stdin_data", "use_shell")
     COMMAND_FIELD_NUMBER: _ClassVar[int]

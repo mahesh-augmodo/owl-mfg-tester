@@ -245,26 +245,30 @@ class OwlProberClient(htf.BasePlug):
         Returns:
             test_agent_pb2.RunCommandResponse containing stdout, stderr, exit_code, and error_message.
         """
-        run_command_request = test_agent_pb2.RunCommandRequest(
-            command=command,
-            args=args if args is not None else [],
-            timeout_seconds=timeout_seconds,
-            working_directory=working_directory,
-            stdin_data=stdin_data,
-            use_shell=use_shell
-        )
-        response = self.stub.RunCommand(
-            run_command_request,
-            timeout=CONF.grpc_connection_timeout_seconds)
-        self.logger.debug(
-            f"RunCommand response: exit_code={
-                response.exit_code}, " f"stdout_len={
-                len(
-                    response.stdout)}, stderr_len={
+        try:
+            run_command_request = test_agent_pb2.RunCommandRequest(
+                command=command,
+                args=args if args is not None else [],
+                timeout_seconds=timeout_seconds,
+                working_directory=working_directory,
+                stdin_data=stdin_data,
+                use_shell=use_shell
+            )
+            response = self.stub.RunCommand(
+                run_command_request,
+                timeout=CONF.grpc_connection_timeout_seconds)
+            self.logger.debug(
+                f"RunCommand response: exit_code={
+                    response.exit_code}, " f"stdout_len={
                     len(
-                        response.stderr)}, " f"error_message='{
-                            response.error_message}'")
-        return response
+                        response.stdout)}, stderr_len={
+                        len(
+                            response.stderr)}, " f"error_message='{
+                                response.error_message}'")
+            return response
+        except grpc.RpcError as e:
+            print(f"gRPC Failed with code: {e.code()}")
+            print(f"Details: {e.details()}")
 
     def UploadFile(
             self,

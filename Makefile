@@ -15,9 +15,7 @@ all: mfg_tester owl_prober
 
 proto-python:
 	@echo "Compiling Python protobufs..."
-	mkdir -p $(PYTHON_OUT_DIR)
-	# Remove any existing generated files in the target output path to ensure a clean slate
-	python3 -m grpc_tools.protoc -I. \
+	python -m grpc_tools.protoc -I. \
 	  --python_out=$(PYTHON_OUT_DIR) \
 	  --pyi_out=$(PYTHON_OUT_DIR) \
 	  --grpc_python_out=$(PYTHON_OUT_DIR) \

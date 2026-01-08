@@ -116,6 +116,11 @@ class DutAgentServiceStub(object):
             request_serializer=proto_dot_test__agent__pb2.DownloadFileRequest.SerializeToString,
             response_deserializer=proto_dot_test__agent__pb2.DownloadFileResponse.FromString,
             _registered_method=True)
+        self.SetLEDColor = channel.unary_unary(
+            '/dutTestAgent.DutAgentService/SetLEDColor',
+            request_serializer=proto_dot_test__agent__pb2.SetLEDColorRequest.SerializeToString,
+            response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            _registered_method=True)
 
 
 class DutAgentServiceServicer(object):
@@ -233,6 +238,13 @@ class DutAgentServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SetLEDColor(self, request, context):
+        """SetLEDColor sets the brightness values and blink rates for RGB LEDs via sysfs.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DutAgentServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -315,6 +327,11 @@ def add_DutAgentServiceServicer_to_server(servicer, server):
             servicer.DownloadFile,
             request_deserializer=proto_dot_test__agent__pb2.DownloadFileRequest.FromString,
             response_serializer=proto_dot_test__agent__pb2.DownloadFileResponse.SerializeToString,
+        ),
+        'SetLEDColor': grpc.unary_unary_rpc_method_handler(
+            servicer.SetLEDColor,
+            request_deserializer=proto_dot_test__agent__pb2.SetLEDColorRequest.FromString,
+            response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -751,6 +768,33 @@ class DutAgentService(object):
             '/dutTestAgent.DutAgentService/DownloadFile',
             proto_dot_test__agent__pb2.DownloadFileRequest.SerializeToString,
             proto_dot_test__agent__pb2.DownloadFileResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SetLEDColor(request,
+                    target,
+                    options=(),
+                    channel_credentials=None,
+                    call_credentials=None,
+                    insecure=False,
+                    compression=None,
+                    wait_for_ready=None,
+                    timeout=None,
+                    metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/dutTestAgent.DutAgentService/SetLEDColor',
+            proto_dot_test__agent__pb2.SetLEDColorRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,
